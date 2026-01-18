@@ -1,0 +1,82 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'PT Sans', sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 220 20% 96%; /* Light Gray-Blue */
+    --foreground: 220 15% 20%; /* Dark Slate */
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 20%;
+    --primary: 25 80% 55%; /* Warm Orange */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 28% 80%; /* Muted Blue */
+    --secondary-foreground: 220 15% 20%;
+    --muted: 220 20% 90%; /* Lighter Gray-Blue */
+    --muted-foreground: 220 10% 45%;
+    --accent: 205 90% 94%; /* Very Light Blue */
+    --accent-foreground: 205 90% 30%;
+    --destructive: 0 72% 51%; /* Red */
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 15% 85%;
+    --input: 220 15% 90%;
+    --ring: 25 80% 55%;
+    --chart-1: 25 80% 55%;
+    --chart-2: 205 70% 50%;
+    --chart-3: 30 70% 60%;
+    --chart-4: 215 50% 65%;
+    --chart-5: 220 70% 75%;
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: 220 20% 12%; /* Dark Slate Blue */
+    --foreground: 220 15% 95%; /* Light Gray */
+    --card: 220 20% 16%;
+    --card-foreground: 220 15% 95%;
+    --popover: 220 20% 16%;
+    --popover-foreground: 220 15% 95%;
+    --primary: 25 75% 60%; /* Warm Orange */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 25% 30%; /* Dark Muted Blue */
+    --secondary-foreground: 220 15% 95%;
+    --muted: 220 20% 20%;
+    --muted-foreground: 220 10% 65%;
+    --accent: 205 80% 25%;
+    --accent-foreground: 205 80% 95%;
+    --destructive: 0 63% 45%; /* Red */
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 15% 30%;
+    --input: 220 15% 25%;
+    --ring: 25 75% 60%;
+    --chart-1: 25 75% 60%;
+    --chart-2: 205 65% 55%;
+    --chart-3: 30 75% 65%;
+    --chart-4: 215 55% 70%;
+    --chart-5: 220 75% 80%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .kitchen-tabs .c-PJLV-ifVPEfe-css {
+    background-color: hsl(var(--muted) / 0.5);
+  }
+  .dark .kitchen-tabs .c-PJLV-ifVPEfe-css {
+    background-color: hsl(var(--muted) / 0.5);
+  }
+}

@@ -1,0 +1,373 @@
+
+{
+  "entities": {
+    "MenuItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MenuItem",
+      "type": "object",
+      "description": "Represents an item on the menu.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the menu item."
+        },
+        "category": {
+          "type": "string",
+          "description": "Category the menu item belongs to."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the menu item."
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the menu item."
+        },
+        "price": {
+          "type": "number",
+          "description": "Price of the menu item."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the image for the menu item.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "name",
+        "price"
+      ]
+    },
+    "Order": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Order",
+      "type": "object",
+      "description": "Represents a customer order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order."
+        },
+        "tableId": {
+          "type": "string",
+          "description": "Reference to Table. (Relationship: Table 1:N Order)"
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "Date and time when the order was placed.",
+          "format": "date-time"
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "Total amount of the order."
+        },
+        "discountPercentage": {
+          "type": "number",
+          "description": "Discount percentage applied to the order."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "description": "Method of payment used for the order (e.g., cash, card)."
+        },
+        "orderItems": {
+          "type": "array",
+          "description": "List of order items.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "tableId",
+        "orderDate",
+        "totalAmount",
+        "paymentMethod",
+        "orderItems"
+      ]
+    },
+    "OrderItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OrderItem",
+      "type": "object",
+      "description": "Represents a single item within an order.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the order item."
+        },
+        "orderId": {
+          "type": "string",
+          "description": "Reference to Order. (Relationship: Order 1:N OrderItem)"
+        },
+        "menuItemId": {
+          "type": "string",
+          "description": "Reference to MenuItem. (Relationship: MenuItem 1:N OrderItem)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the menu item in the order."
+        },
+        "itemPrice": {
+          "type": "number",
+          "description": "Price of the order item."
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "menuItemId",
+        "quantity"
+      ]
+    },
+    "Table": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Table",
+      "type": "object",
+      "description": "Represents a table in the restaurant.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the table."
+        },
+        "tableNumber": {
+          "type": "number",
+          "description": "Table number."
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the table (Available, Occupied, Reserved, Cleaning)."
+        }
+      },
+      "required": [
+        "id",
+        "tableNumber",
+        "status"
+      ]
+    },
+    "KitchenOrder": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "KitchenOrder",
+      "type": "object",
+      "description": "Represents an order in the kitchen.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the kitchen order."
+        },
+        "orderId": {
+          "type": "string",
+          "description": "Reference to Order. (Relationship: Order 1:1 KitchenOrder)"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the kitchen order (Pending, In Preparation, Completed)."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Any special notes or instructions for the kitchen."
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "status"
+      ]
+    },
+    "SalesReport": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SalesReport",
+      "type": "object",
+      "description": "Represents a sales report.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the sales report."
+        },
+        "reportDate": {
+          "type": "string",
+          "description": "Date of the sales report.",
+          "format": "date-time"
+        },
+        "totalSales": {
+          "type": "number",
+          "description": "Total sales for the reporting period."
+        },
+        "topSellingItems": {
+          "type": "array",
+          "description": "List of top selling menu item ids.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "reportDate",
+        "totalSales"
+      ]
+    },
+    "CustomerOrder": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "CustomerOrder",
+      "type": "object",
+      "description": "Represents an order placed by a customer via QR code.",
+      "properties": {
+        "id": { "type": "string" },
+        "tableId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "handled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/entities/OrderItem" }
+        }
+      },
+      "required": ["tableId", "status", "createdAt", "items"]
+    },
+    "MenuCategory": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MenuCategory",
+      "type": "object",
+      "description": "Represents a menu category document which contains its items.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The display name of the menu category."
+        },
+        "items": {
+          "type": "array",
+          "description": "An array of menu items within this category.",
+          "items": {
+            "$ref": "#/entities/MenuItem"
+          }
+        }
+      },
+      "required": ["name", "items"]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/menu/{categorySlug}",
+        "definition": {
+          "entityName": "MenuCategory",
+          "schema": {
+            "$ref": "#/entities/MenuCategory"
+          },
+          "description": "Stores menu items, grouped by category documents. The document ID is a URL-friendly slug of the category name.",
+          "params": [
+            {
+              "name": "categorySlug",
+              "description": "The URL-friendly slug of the category name (e.g., 'pasta-penne-spaghetti')."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/tables/{tableId}",
+        "definition": {
+          "entityName": "Table",
+          "schema": {
+            "$ref": "#/entities/Table"
+          },
+          "description": "Stores table information. No authentication needed for read operations.",
+          "params": [
+            {
+              "name": "tableId",
+              "description": "Unique identifier for the table."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/orders/{orderId}",
+        "definition": {
+          "entityName": "Order",
+          "schema": {
+            "$ref": "#/entities/Order"
+          },
+          "description": "Stores order information. Includes 'tableId' for simpler rules.",
+          "params": [
+            {
+              "name": "orderId",
+              "description": "Unique identifier for the order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/customerOrders/{orderId}",
+        "definition": {
+          "entityName": "CustomerOrder",
+          "schema": {
+            "$ref": "#/entities/CustomerOrder"
+          },
+          "description": "Stores incoming orders from customers via QR codes.",
+          "params": [
+            {
+              "name": "orderId",
+              "description": "Unique identifier for the customer order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/order_items/{orderItemId}",
+        "definition": {
+          "entityName": "OrderItem",
+          "schema": {
+            "$ref": "#/entities/OrderItem"
+          },
+          "description": "Stores individual order items. ",
+          "params": [
+            {
+              "name": "orderItemId",
+              "description": "Unique identifier for the order item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/kitchen_orders/{kitchenOrderId}",
+        "definition": {
+          "entityName": "KitchenOrder",
+          "schema": {
+            "$ref": "#/entities/KitchenOrder"
+          },
+          "description": "Stores kitchen order information.",
+          "params": [
+            {
+              "name": "kitchenOrderId",
+              "description": "Unique identifier for the kitchen order."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sales_reports/{salesReportId}",
+        "definition": {
+          "entityName": "SalesReport",
+          "schema": {
+            "$ref": "#/entities/SalesReport"
+          },
+          "description": "Stores sales reports.",
+          "params": [
+            {
+              "name": "salesReportId",
+              "description": "Unique identifier for the sales report."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support the restaurant POS and management application, focusing on scalability, security, and ease of querying. The structure prioritizes authorization independence by avoiding hierarchical `get()` calls in security rules. This is achieved through denormalization, specifically by embedding relevant authorization data (such as tableId in the Orders collection) directly into documents where needed.\n\nTo achieve Authorization Independence, the `orders` collection includes `tableId` to make sure that `Order` documents can be queried easily by `tableId`, in order to achieve rules that are based on document content and avoid using `get()` calls on parent documents.\n\nThe QAPs (Rules are not Filters) principle is supported by ensuring that list operations can be securely performed without exposing sensitive data. This is facilitated by segregating data based on access needs. Table data and menu items can be read by anyone and orders and salesReports only by admins (or authenticated users if auth is configured).\n\nThis structure allows for efficient querying and management of data, as well as simplified security rules that are easier to understand and maintain."
+  }
+}

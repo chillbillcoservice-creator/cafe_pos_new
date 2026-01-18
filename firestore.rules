@@ -1,0 +1,36 @@
+/**
+ * In this initial development phase, the rules are intentionally open to allow for rapid
+ * prototyping and feature implementation without being hindered by security restrictions.
+ * `allow read, write: if true;` means that any client, authenticated or not, can read,
+ * write, and delete any data in the entire database.
+ *
+ * WARNING: This is NOT a secure configuration for a production environment.
+ * Before deploying your application to the public, you MUST implement granular security rules.
+ * This involves defining who can access which data and under what conditions, typically
+ * by checking for user authentication (`request.auth != null`) and validating data schemas.
+ *
+ * The `isSignedIn()` function is provided as a starting point for when you are ready to
+ * secure your database.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * Helper function to check if a user is authenticated.
+     * To be used in production rules.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Matches any collection in the database.
+     * In a production app, you would replace this with specific match statements
+     * for each collection (e.g., `match /orders/{orderId} { ... }`).
+     */
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
