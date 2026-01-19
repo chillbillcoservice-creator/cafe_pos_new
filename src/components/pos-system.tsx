@@ -693,9 +693,11 @@ export default function PosSystem({
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [easyMode, setEasyMode] = useState(false);
-  const [lastKotItems, setLastKotItems] = useState<OrderItem[]>([]);
+  const [lastKotHistory, setLastKotHistory] = useState<Record<string, OrderItem[]>>({});
   const [isEasyModeInitialized, setIsEasyModeInitialized] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isReprintDialogOpen, setIsReprintDialogOpen] = useState(false);
+  const [reprintCategory, setReprintCategory] = useState<string | undefined>(undefined);
   const [receiptPreview, setReceiptPreview] = useState('');
   const { toast } = useToast();
 
@@ -1138,19 +1140,29 @@ export default function PosSystem({
     }
   };
 
-  const processKOTs = useCallback(async (specificCategory?: string, isReprint: boolean = false) => {
+  const processKOTs = useCallback(async (specificCategory?: string, reprintMode: boolean | 'last' | 'full' = false) => {
     const isReadyForKOT = selectedOrderType === 'Dine-In' ? !!selectedTableId : true;
     if (isProcessing || !isReadyForKOT) {
       if (!isReadyForKOT) toast({ variant: "destructive", title: t("No Table Selected") });
       return;
     }
 
+    const isReprint = reprintMode !== false;
+
+    // Use specific category as key, or default to '__GLOBAL__' for main KOT
+    const historyKey = specificCategory || '__GLOBAL__';
+
     // Determine source items: NEW items for normal send, ALL items for reprint
     let itemsToProcess: OrderItem[] = [];
     let newItems: OrderItem[] = [];
 
     if (isReprint) {
-      itemsToProcess = lastKotItems.length > 0 ? [...lastKotItems] : [...orderItems];
+      const lastItems = lastKotHistory[historyKey] || [];
+      if (reprintMode === 'last' && lastItems.length > 0) {
+        itemsToProcess = [...lastItems];
+      } else {
+        itemsToProcess = [...orderItems];
+      }
     } else {
       newItems = getNewItems(orderItems, activeOrder?.items || []);
       itemsToProcess = newItems;
@@ -1162,6 +1174,9 @@ export default function PosSystem({
       itemsToProcess = itemsToProcess.filter(item => !isBeverage(item.category || ''));
     } else if (specificCategory === '__BAR__') {
       itemsToProcess = itemsToProcess.filter(item => isBeverage(item.category || ''));
+    } else if (specificCategory === '__ALL_SPECIFIC__') {
+      const kotCategories = kotPreference.type === 'category' ? (kotPreference.categories || []) : [];
+      itemsToProcess = itemsToProcess.filter(item => kotCategories.includes(item.category || ''));
     } else if (specificCategory) {
       itemsToProcess = itemsToProcess.filter(item => item.category === specificCategory);
     } else {
@@ -1265,18 +1280,45 @@ export default function PosSystem({
       }
 
       if (!isReprint) {
-        setLastKotItems(itemsToProcess);
+        setLastKotHistory(prev => {
+          const newHistory = { ...prev, [historyKey]: itemsToProcess };
+
+          // If sending ALL specific categories, also update the history for each individual category
+          // This ensures that "Reprint Last KOT" works for individual category buttons too
+          if (specificCategory === '__ALL_SPECIFIC__') {
+            const itemsByCategory: Record<string, OrderItem[]> = {};
+            itemsToProcess.forEach(item => {
+              if (item.category) {
+                if (!itemsByCategory[item.category]) itemsByCategory[item.category] = [];
+                itemsByCategory[item.category].push(item);
+              }
+            });
+
+            Object.entries(itemsByCategory).forEach(([cat, items]) => {
+              newHistory[cat] = items;
+            });
+          }
+
+          return newHistory;
+        });
       }
 
       const kotGroupsToPrint = groupItemsForKOT(itemsToProcess);
 
-      kotGroupsToPrint.forEach((group, index) => {
+      const printSequential = (index: number) => {
+        if (index >= kotGroupsToPrint.length) return;
+
+        const group = kotGroupsToPrint[index];
+        // Add REPRINT prefix to title if needed
+        const titleToPrint = isReprint ? `${t('REPRINT')} - ${group.title}` : group.title;
+        printKot(finalOrderState, group.items, titleToPrint);
+
         setTimeout(() => {
-          // Add REPRINT prefix to title if needed
-          const titleToPrint = isReprint ? `${t('REPRINT')} - ${group.title}` : group.title;
-          printKot(finalOrderState, group.items, titleToPrint);
-        }, index * 500);
-      });
+          printSequential(index + 1);
+        }, 1500); // 1.5 second delay between prints
+      };
+
+      printSequential(0);
 
       toast({ title: `${kotGroupsToPrint.map(g => g.title).join(' & ')} ${isReprint ? 'Reprinted' : 'Sent'}!` });
 
@@ -1620,11 +1662,18 @@ export default function PosSystem({
 
     const buttons: React.ReactNode[] = [];
     // Helper to get button props
-    const getButtonProps = (title: string, colorClass: string, onClick: () => void) => ({
+    const getButtonProps = (title: string, colorClass: string, category?: string) => ({
       title: isReprintMode ? `${t('Reprint')} ${t(title)}` : `${t('Send')} ${t(title)}`,
       color: isReprintMode ? 'bg-gray-600 hover:bg-gray-700' : colorClass, // Grey for reprint to distinguish
       icon: isReprintMode ? <Printer className="mr-2 h-4 w-4" /> : <Send className="mr-2 h-4 w-4" />,
-      onClick
+      onClick: () => {
+        if (isReprintMode) {
+          setReprintCategory(category);
+          setIsReprintDialogOpen(true);
+        } else {
+          processKOTs(category, false);
+        }
+      }
     });
 
     const isBeverage = (cat: string) => cat.trim().toLowerCase() === 'beverages';
@@ -1635,7 +1684,7 @@ export default function PosSystem({
       const barItems = sourceItems.filter(item => isBeverage(item.category || ''));
 
       if (kitchenItems.length > 0) {
-        const props = getButtonProps('Kitchen KOT', 'bg-orange-600 hover:bg-orange-700', () => processKOTs('__KITCHEN__', isReprintMode));
+        const props = getButtonProps('Kitchen KOT', 'bg-orange-600 hover:bg-orange-700', '__KITCHEN__');
         buttons.push(
           <Button
             key="send-kitchen-kot"
@@ -1651,7 +1700,7 @@ export default function PosSystem({
       }
 
       if (barItems.length > 0) {
-        const props = getButtonProps('Bar KOT', 'bg-blue-600 hover:bg-blue-700', () => processKOTs('__BAR__', isReprintMode));
+        const props = getButtonProps('Bar KOT', 'bg-blue-600 hover:bg-blue-700', '__BAR__');
         buttons.push(
           <Button
             key="send-bar-kot"
@@ -1678,7 +1727,7 @@ export default function PosSystem({
       let baseTitle = isOnlyBeverages ? "Drink KOT" : "KOT";
       let colorClass = isOnlyBeverages ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700';
 
-      const props = getButtonProps(baseTitle, colorClass, () => processKOTs(undefined, isReprintMode));
+      const props = getButtonProps(baseTitle, colorClass, undefined);
 
       buttons.push(
         <Button
@@ -1702,7 +1751,7 @@ export default function PosSystem({
         const title = isBar ? t('Bar KOT') : `${t(category)} ${t('KOT')}`;
         const color = isBar ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700';
 
-        const props = getButtonProps(title, color, () => processKOTs(category, isReprintMode));
+        const props = getButtonProps(title, color, category);
         buttons.push(
           <Button
             key={`kot-${category}`}
@@ -1717,6 +1766,24 @@ export default function PosSystem({
         );
       }
     });
+
+    // "Send All KOT" button (only if there are specific category items)
+    const specificKotItems = sourceItems.filter(item => kotCategories.includes(item.category || ''));
+    if (specificKotItems.length > 0 && kotCategories.length > 1) {
+      const props = getButtonProps('All KOT', 'bg-orange-500 hover:bg-orange-600', '__ALL_SPECIFIC__');
+      buttons.push(
+        <Button
+          key="send-all-specific-kot"
+          size="lg"
+          className={`h-12 text-base w-full ${props.color}`}
+          onClick={props.onClick}
+          disabled={isProcessing}
+        >
+          {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : props.icon}
+          {props.title} ({specificKotItems.reduce((sum, item) => sum + item.quantity, 0)})
+        </Button>
+      );
+    }
 
     return buttons;
   };
@@ -2366,6 +2433,38 @@ export default function PosSystem({
         lowStockItems={lowStockItems}
         outOfStockItems={outOfStockItems}
       />
+      <AlertDialog open={isReprintDialogOpen} onOpenChange={setIsReprintDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('Reprint KOT Options')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('Would you like to reprint only the last KOT sent, or the complete order items?')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="sm:justify-center gap-2">
+            <Button variant="outline" onClick={() => setIsReprintDialogOpen(false)}>{t('Cancel')}</Button>
+            <Button
+              className="bg-orange-500 hover:bg-orange-600"
+              onClick={() => {
+                setIsReprintDialogOpen(false);
+                processKOTs(reprintCategory, 'last');
+              }}
+              disabled={!lastKotHistory[reprintCategory || '__GLOBAL__']?.length}
+            >
+              {t('Reprint Last KOT')}
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => {
+                setIsReprintDialogOpen(false);
+                processKOTs(reprintCategory, 'full');
+              }}
+            >
+              {t('Reprint Complete Order')}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div >
   );
 }
