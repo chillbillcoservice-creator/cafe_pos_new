@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from "@/contexts/language-context";
 import {
   Table,
   TableBody,
@@ -76,6 +77,7 @@ function AddOrEditVendorDialog({
   onSave: (vendor: Omit<Vendor, 'id'> & { id?: string }) => void;
   existingVendor: Vendor | null;
 }) {
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [phone, setPhone] = useState('');
@@ -108,28 +110,28 @@ function AddOrEditVendorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{existingVendor ? 'Edit' : 'Add'} Vendor</DialogTitle>
+          <DialogTitle>{existingVendor ? t('Edit Vendor') : t('Add Vendor')}</DialogTitle>
           <DialogDescription>
-            Manage your suppliers and service providers.
+            {t('Manage your suppliers and service providers.')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="vendor-name">Vendor Name</Label>
-            <Input id="vendor-name" placeholder="e.g., Local Farm Produce" value={name} onChange={e => setName(e.target.value)} />
+            <Label htmlFor="vendor-name">{t('Vendor Name')}</Label>
+            <Input id="vendor-name" placeholder={t('e.g., Local Farm Produce')} value={name} onChange={e => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="vendor-category">Category</Label>
-            <Input id="vendor-category" placeholder="e.g., Food & Beverage" value={category} onChange={e => setCategory(e.target.value)} />
+            <Label htmlFor="vendor-category">{t('Category')}</Label>
+            <Input id="vendor-category" placeholder={t('e.g., Food & Beverage')} value={category} onChange={e => setCategory(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="vendor-phone">Mobile No. (Optional)</Label>
-            <Input id="vendor-phone" placeholder="e.g., 9876543210" value={phone} onChange={e => setPhone(e.target.value)} />
+            <Label htmlFor="vendor-phone">{t('Mobile No. (Optional)')}</Label>
+            <Input id="vendor-phone" placeholder={t('e.g., 9876543210')} value={phone} onChange={e => setPhone(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave}>Save Vendor</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
+          <Button onClick={handleSave}>{t('Save Vendor')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -150,21 +152,22 @@ function ManageVendorsDialog({
   onEditVendor: (vendor: Vendor) => void;
   onDeleteVendor: (vendorId: string) => void;
 }) {
+  const { t } = useLanguage();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Manage Vendors</DialogTitle>
-          <DialogDescription>View, edit, or delete your vendors.</DialogDescription>
+          <DialogTitle>{t('Manage Vendors')}</DialogTitle>
+          <DialogDescription>{t('View, edit, or delete your vendors.')}</DialogDescription>
         </DialogHeader>
         <div className="max-h-[60vh] overflow-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Mobile No.</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>{t('Name')}</TableHead>
+                <TableHead>{t('Category')}</TableHead>
+                <TableHead>{t('Mobile No.')}</TableHead>
+                <TableHead className="text-right">{t('Actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -175,10 +178,10 @@ function ManageVendorsDialog({
                     <TableCell>{vendor.category}</TableCell>
                     <TableCell>{vendor.phone || 'N/A'}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => onEditVendor(vendor)}>
+                      <Button key="edit-btn" variant="ghost" size="icon" onClick={() => onEditVendor(vendor)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <AlertDialog>
+                      <AlertDialog key="delete-dialog">
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="text-destructive">
                             <Trash2 className="h-4 w-4" />
@@ -186,14 +189,14 @@ function ManageVendorsDialog({
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogTitle>{t('Are you sure?')}</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This will permanently delete the vendor "{vendor.name}". This action cannot be undone.
+                              {t('This will permanently delete the vendor')} "{vendor.name}". {t('This action cannot be undone.')}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDeleteVendor(vendor.id)}>Delete</AlertDialogAction>
+                            <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onDeleteVendor(vendor.id)}>{t('Delete')}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -202,14 +205,14 @@ function ManageVendorsDialog({
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">No vendors found.</TableCell>
+                  <TableCell colSpan={4} className="text-center">{t('No vendors found.')}</TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -222,13 +225,16 @@ function AddOrEditPendingBillDialog({
   onSave,
   existingNames,
   type,
+  currency,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (name: string, amount: number, mobile?: string, dueDate?: Date) => void;
   existingNames: string[];
   type: 'customer' | 'vendor';
+  currency: string;
 }) {
+  const { t } = useLanguage();
   const [isNew, setIsNew] = useState(true);
   const [selectedName, setSelectedName] = useState('');
   const [newName, setNewName] = useState('');
@@ -261,40 +267,40 @@ function AddOrEditPendingBillDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Pending Bill</DialogTitle>
+          <DialogTitle>{t('Add Pending Bill')}</DialogTitle>
           <DialogDescription>
-            Record a new transaction for a {type}.
+            {t('Record a new transaction for a')} {t(type)}.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>Select or Add {type === 'customer' ? 'Customer' : 'Vendor'}</Label>
+            <Label>{t('Select or Add')} {type === 'customer' ? t('Customer') : t('Vendor')}</Label>
             <div className="flex items-center gap-4">
               <Button
                 variant={!isNew ? "default" : "outline"}
                 onClick={() => setIsNew(false)}
                 className={cn(!isNew && "bg-primary text-primary-foreground")}
               >
-                Existing
+                {t('Existing')}
               </Button>
               <Button
                 variant={isNew ? "default" : "outline"}
                 onClick={() => setIsNew(true)}
                 className={cn(isNew && "bg-primary text-primary-foreground")}
               >
-                New
+                {t('New')}
               </Button>
             </div>
             {isNew ? (
               <Input
-                placeholder={`New ${type} name`}
+                placeholder={`${t('New')} ${t(type)} ${t('name')}`}
                 value={newName}
                 onChange={e => setNewName(e.target.value)}
               />
             ) : (
               <Select onValueChange={setSelectedName} value={selectedName}>
                 <SelectTrigger>
-                  <SelectValue placeholder={`Select existing ${type}`} />
+                  <SelectValue placeholder={`${t('Select existing')} ${t(type)}`} />
                 </SelectTrigger>
                 <SelectContent>
                   {existingNames.map(name => (
@@ -307,22 +313,22 @@ function AddOrEditPendingBillDialog({
 
           {isNew && (
             <div className="space-y-2">
-              <Label htmlFor="mobile">Mobile No. (Optional)</Label>
-              <Input id="mobile" placeholder="e.g., 9876543210" value={mobile} onChange={e => setMobile(e.target.value)} />
+              <Label htmlFor="mobile">{t('Mobile No. (Optional)')}</Label>
+              <Input id="mobile" placeholder={t('e.g., 9876543210')} value={mobile} onChange={e => setMobile(e.target.value)} />
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (Rs.)</Label>
+            <Label htmlFor="amount">{t('Amount')} ({currency})</Label>
             <Input id="amount" type="number" placeholder="e.g., 500" value={amount} onChange={e => setAmount(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label>Due Date (Optional)</Label>
+            <Label>{t('Due Date (Optional)')}</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant={"outline"} className="w-full justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>Pick a date</span>}
+                  {dueDate ? format(dueDate, "PPP") : <span>{t('Pick a date')}</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
@@ -332,8 +338,8 @@ function AddOrEditPendingBillDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave}>Save Bill</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
+          <Button onClick={handleSave}>{t('Save Bill')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -364,6 +370,7 @@ function PendingBillsCard({
   allNames?: string[];
   currency: string;
 }) {
+  const { t } = useLanguage();
   const [isAddBillOpen, setIsAddBillOpen] = useState(false);
 
   const totalPending = useMemo(() => bills.reduce((total, bill) => {
@@ -384,23 +391,23 @@ function PendingBillsCard({
         <div className="flex justify-between items-center">
           <CardTitle className="flex items-center gap-2">
             {React.createElement(icon, { className: "h-6 w-6" })}
-            {title}
+            {t(title)}
           </CardTitle>
           <Button onClick={() => setIsAddBillOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Bill
+            <PlusCircle className="mr-2 h-4 w-4" /> {t('Add Bill')}
           </Button>
         </div>
         <CardDescription>
-          Total Pending: <span className={cn("font-bold", type === 'customer' ? 'text-green-600' : 'text-red-600')}>Rs.{totalPending.toFixed(2)}</span>
+          {t('Total Pending')}: <span className={cn("font-bold", type === 'customer' ? 'text-green-600' : 'text-red-600')}>{currency}{totalPending.toFixed(2)}</span>
         </CardDescription>
         <div className="space-y-1 mt-2">
-          <div className="flex justify-between items-center text-sm">
+          <div key="pending-info" className="flex justify-between items-center text-sm">
             <span className={cn("font-bold", type === 'customer' ? 'text-green-600' : 'text-red-600')}>
-              Rs.{totalPending.toFixed(2)}
+              {currency}{totalPending.toFixed(2)}
             </span>
-            <span className="text-muted-foreground">Overall Limit: Rs.{totalLimit.toLocaleString()}</span>
+            <span className="text-muted-foreground">{t('Overall Limit')}: {currency}{totalLimit.toLocaleString()}</span>
           </div>
-          <Progress value={totalProgress} indicatorClassName={totalProgress > 100 ? "bg-red-500" : (type === 'customer' ? 'bg-green-500' : 'bg-red-500')} />
+          <Progress key="progress-bar" value={totalProgress} indicatorClassName={totalProgress > 100 ? "bg-red-500" : (type === 'customer' ? 'bg-green-500' : 'bg-red-500')} />
         </div>
       </CardHeader>
       <CardContent>
@@ -414,21 +421,21 @@ function PendingBillsCard({
                     <ChevronsUpDown className="h-4 w-4" />
                     <span className="font-medium">{bill.name}</span>
                     <span className={cn("font-semibold text-sm", type === 'customer' ? 'text-green-600' : 'text-red-600')}>
-                      (Rs.{totalForName.toFixed(2)})
+                      ({currency}{totalForName.toFixed(2)})
                     </span>
                   </CollapsibleTrigger>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm">Clear All</Button>
+                      <Button variant="ghost" size="sm">{t('Clear All')}</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>This will mark all pending bills for {bill.name} as paid and clear their balance. This action cannot be undone.</AlertDialogDescription>
+                        <AlertDialogTitle>{t('Are you sure?')}</AlertDialogTitle>
+                        <AlertDialogDescription>{t('This will mark all pending bills for')} {bill.name} {t('as paid and clear their balance. This action cannot be undone.')}</AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onClearAll(bill.id)}>Confirm</AlertDialogAction>
+                        <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => onClearAll(bill.id)}>{t('Confirmed')}</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
@@ -439,22 +446,22 @@ function PendingBillsCard({
                     <div key={tx.id} className="flex justify-between items-center p-1.5 bg-muted/50 rounded-md text-sm group">
                       <div>
                         <span>{format(new Date(tx.date), 'PPP')}</span>
-                        <span className={cn("font-semibold ml-4", type === 'customer' ? 'text-green-700' : 'text-red-700')}>Rs.{tx.amount.toFixed(2)}</span>
+                        <span className={cn("font-semibold ml-4", type === 'customer' ? 'text-green-700' : 'text-red-700')}>{currency}{tx.amount.toFixed(2)}</span>
                       </div>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 h-7">Settle</Button>
+                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 h-7">{t('Settle')}</Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Settle this transaction?</AlertDialogTitle>
+                            <AlertDialogTitle>{t('Settle this transaction?')}</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This will settle the transaction of Rs.{tx.amount.toFixed(2)} for {bill.name}. This cannot be undone.
+                              {t('This will settle the transaction of')} {currency}{tx.amount.toFixed(2)} {t('for')} {bill.name}. {t('This cannot be undone.')}
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onSettleTransaction(bill.id, tx.id, tx.amount)}>Settle</AlertDialogAction>
+                            <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => onSettleTransaction(bill.id, tx.id, tx.amount)}>{t('Settle')}</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
@@ -471,6 +478,7 @@ function PendingBillsCard({
           onSave={(name, amount, mobile, dueDate) => onAddTransaction(type, name, amount, mobile, dueDate)}
           existingNames={existingNames}
           type={type}
+          currency={currency}
         />
       </CardContent>
     </Card>
@@ -490,7 +498,9 @@ export default function ExpensesTracker({
   vendorCreditLimit,
   currency = 'Rs.',
 }: ExpensesTrackerProps) {
+  const { t } = useLanguage();
   const { toast } = useToast();
+
 
   const vendors = initialVendors || [];
 
@@ -690,7 +700,7 @@ export default function ExpensesTracker({
         vendorId: vendor?.id || null,
       };
       await saveExpenses([...initialExpenses, newExpense]);
-      toast({ title: "Expense Recorded", description: `An expense of Rs.${totalPaid.toFixed(2)} for ${billToClear.name} has been recorded.` });
+      toast({ title: "Expense Recorded", description: `An expense of ${currency}${totalPaid.toFixed(2)} for ${billToClear.name} has been recorded.` });
     }
 
     await savePendingBills(newPendingBills);
@@ -743,10 +753,10 @@ export default function ExpensesTracker({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>{t('Date')}</TableHead>
+              <TableHead>{t('Category')}</TableHead>
+              <TableHead>{t('Description')}</TableHead>
+              <TableHead className="text-right">{t('Amount')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -755,13 +765,13 @@ export default function ExpensesTracker({
                 <TableCell>{format(new Date(expense.date), 'PPP')}</TableCell>
                 <TableCell>{expense.category}</TableCell>
                 <TableCell>{expense.description}</TableCell>
-                <TableCell className="text-right font-mono">Rs.{expense.amount.toFixed(2)}</TableCell>
+                <TableCell className="text-right font-mono">{currency}{expense.amount.toFixed(2)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       ) : (
-        <p className="text-muted-foreground text-center p-8">No expenses found for this period.</p>
+        <p className="text-muted-foreground text-center p-8">{t('No expenses found for this period.')}</p>
       )
     );
     setIsExpenseDetailOpen(true);
@@ -772,6 +782,7 @@ export default function ExpensesTracker({
     <div className="p-4 space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <PendingBillsCard
+          key="customer-bills"
           title="To Collect from Customers"
           icon={HandCoins}
           bills={pendingBills.filter(b => b.type === 'customer')}
@@ -781,9 +792,10 @@ export default function ExpensesTracker({
           onSettleTransaction={handleSettleTransaction}
           totalLimit={customerCreditLimit}
           allNames={customers.map(c => c.name)}
-          currency="Rs."
+          currency={currency}
         />
         <PendingBillsCard
+          key="vendor-bills"
           title="To Pay to Vendors"
           icon={Landmark}
           bills={pendingBills.filter(b => b.type === 'vendor')}
@@ -793,7 +805,7 @@ export default function ExpensesTracker({
           onSettleTransaction={handleSettleTransaction}
           totalLimit={vendorCreditLimit}
           allNames={vendors.map(v => v.name)}
-          currency="Rs."
+          currency={currency}
         />
       </div>
 

@@ -17,6 +17,8 @@ import { QrCode, Wallet, Users2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
+import { useLanguage } from '@/contexts/language-context';
+
 interface PaymentDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -24,9 +26,11 @@ interface PaymentDialogProps {
   receiptPreview: string;
   onPaymentSuccess: (customerDetails?: { name: string; phone: string }) => void;
   onNavigate: (tab: string) => void;
+  currency?: string;
 }
 
-export function PaymentDialog({ isOpen, onOpenChange, total, receiptPreview, onPaymentSuccess, onNavigate }: PaymentDialogProps) {
+export function PaymentDialog({ isOpen, onOpenChange, total, receiptPreview, onPaymentSuccess, onNavigate, currency = 'Rs.' }: PaymentDialogProps) {
+  const { t } = useLanguage();
   const [cashReceived, setCashReceived] = useState<number | null>(null);
   const [customerName, setCustomerName] = useState('');
   const [customerMobile, setCustomerMobile] = useState('');
@@ -54,7 +58,7 @@ export function PaymentDialog({ isOpen, onOpenChange, total, receiptPreview, onP
 
   const handleCashConfirm = () => {
     if (cashReceived === null || cashReceived < total) {
-      setError('Cash received must be equal to or greater than the total amount.');
+      setError(t('Cash received must be equal to or greater than the total amount.'));
       return;
     }
     setError('');
@@ -82,31 +86,31 @@ export function PaymentDialog({ isOpen, onOpenChange, total, receiptPreview, onP
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Process Payment</DialogTitle>
+          <DialogTitle>{t('Process Payment')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2 border-b pt-4 pb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="customer-name">Customer Name (Optional)</Label>
-              <Input id="customer-name" placeholder="Name" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+              <Label htmlFor="customer-name">{t('Customer Name (Optional)')}</Label>
+              <Input id="customer-name" placeholder={t('Name')} value={customerName} onChange={e => setCustomerName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="customer-mobile">Mobile No. (Optional)</Label>
-              <Input id="customer-mobile" placeholder="Mobile" value={customerMobile} onChange={e => setCustomerMobile(e.target.value)} />
+              <Label htmlFor="customer-mobile">{t('Mobile No. (Optional)')}</Label>
+              <Input id="customer-mobile" placeholder={t('Mobile No.')} value={customerMobile} onChange={e => setCustomerMobile(e.target.value)} />
             </div>
           </div>
           <div className="text-center">
             <Button variant="link" size="sm" className="text-sm" onClick={handleGoToCustomerDatabase}>
               <Users2 className="mr-2 h-4 w-4" />
-              Go to customer database
+              {t('Go to customer database')}
             </Button>
           </div>
         </div>
 
         <div className="text-center py-6">
-          <p className="text-muted-foreground">Total Amount to be Paid</p>
-          <p className="text-6xl font-bold">Rs. {total.toFixed(2)}</p>
+          <p className="text-muted-foreground">{t('Total Amount to be Paid')}</p>
+          <p className="text-6xl font-bold">{currency} {total.toFixed(2)}</p>
         </div>
 
 
@@ -114,48 +118,48 @@ export function PaymentDialog({ isOpen, onOpenChange, total, receiptPreview, onP
           {/* Cash Payment Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Wallet /> Cash Payment</CardTitle>
+              <CardTitle className="flex items-center gap-2"><Wallet /> {t('Cash Payment')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="cash-received">Cash Received</Label>
+                <Label htmlFor="cash-received">{t('Cash Received')}</Label>
                 <Input
                   id="cash-received"
                   ref={cashInputRef}
                   type="number"
                   value={cashReceived === null ? '' : cashReceived}
                   onChange={(e) => setCashReceived(e.target.value ? parseFloat(e.target.value) : null)}
-                  placeholder="e.g., 50.00"
+                  placeholder={t('e.g., 50.00')}
                 />
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               {change !== null && change >= 0 && (
                 <div className="text-center text-2xl font-bold text-primary py-4 bg-muted rounded-md">
-                  Change Due: Rs.{change.toFixed(2)}
+                  {t('Change Due:')} {currency}{change.toFixed(2)}
                 </div>
               )}
-              <Button onClick={handleCashConfirm} className="w-full" size="lg">Confirm Cash Payment</Button>
+              <Button onClick={handleCashConfirm} className="w-full" size="lg">{t('Confirm Cash Payment')}</Button>
             </CardContent>
           </Card>
 
           {/* Online Payment Section */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><QrCode /> Online Payment</CardTitle>
+              <CardTitle className="flex items-center gap-2"><QrCode /> {t('Online Payment')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-col items-center justify-center space-y-2 py-4 border-dashed border-2 rounded-lg h-52">
                 <QrCode className="h-20 w-20 text-muted-foreground" />
                 <p className="text-muted-foreground text-center text-sm">
-                  Show QR code to customer.
+                  {t('Show QR code to customer.')}
                 </p>
               </div>
-              <Button onClick={handleOnlineConfirm} className="w-full" size="lg">Confirm Online Payment</Button>
+              <Button onClick={handleOnlineConfirm} className="w-full" size="lg">{t('Confirm Online Payment')}</Button>
             </CardContent>
           </Card>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>Cancel Payment</Button>
+          <Button variant="outline" onClick={handleClose}>{t('Cancel Payment')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

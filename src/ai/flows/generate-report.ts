@@ -27,6 +27,8 @@ const generateReportPrompt = ai.definePrompt({
 
 Report Type: {{{reportType}}}
 Recipient: {{{recipientEmail}}}
+Recipient: {{{recipientEmail}}}
+Currency: {{{currency}}}
 Current Date: ${new Date().toDateString()}
 
 Filter the provided data based on the report type.
@@ -80,7 +82,7 @@ DATA (JSON Format):
 - Inventory Levels: {{{json inventory}}}
 - Customer Summary: {{{json customerSummary}}}
 
-Generate the report title and content. The content should be well-formatted for an email. Calculate the total revenue and include it in the designated field. Ensure every section is clearly titled and easy to read. ALL monetary values MUST be formatted with "Rs." (e.g. Rs.1500.00). Do NOT use the '$' symbol.
+Generate the report title and content. The content should be well-formatted for an email. Calculate the total revenue and include it in the designated field. Ensure every section is clearly titled and easy to read. ALL monetary values MUST be formatted with "{{{currency}}}" (e.g. {{{currency}}}1500.00). Do NOT use the '$' symbol (unless the currency is '$').
 `,
 });
 
@@ -112,6 +114,7 @@ const generateAndSendReportFlow = ai.defineFlow(
           receiptContent: output.reportContent,
           totalAmount: output.totalRevenue,
           subject: output.reportTitle,
+          currency: input.currency,
         })
       );
 
@@ -144,6 +147,7 @@ export async function generateAndSendReport(
   input: {
     reportType: 'daily' | 'monthly' | 'yearly';
     recipientEmail?: string;
+    currency: string;
   }
 ): Promise<GenerateReportOutput> {
   const { firestore: db } = initializeFirebase();
@@ -260,6 +264,7 @@ export async function generateAndSendReport(
     reportType: input.reportType,
     recipientEmail: uniqueRecipientEmails.join(', '), // For display in prompt
     recipientEmails: uniqueRecipientEmails,
+    currency: input.currency,
     billHistory: billHistory.map(bill => ({
       ...bill,
       id: bill.id,

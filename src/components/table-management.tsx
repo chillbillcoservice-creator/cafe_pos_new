@@ -21,6 +21,7 @@ import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from './ui/alert-dialog';
 import { generateReceipt } from '@/ai/flows/dynamic-receipt-discount-reasoning';
+import { useLanguage } from '@/contexts/language-context';
 
 const statusBaseColors: Record<TableStatus, string> = {
   Available: 'bg-green-400 hover:bg-green-500',
@@ -49,6 +50,7 @@ function TableQrDialog({
   table: TableType | null;
 }) {
   const [baseUrl, setBaseUrl] = useState('');
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -104,9 +106,9 @@ function TableQrDialog({
           <a href={orderUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground mt-2 hover:underline">{orderUrl}</a>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Close')}</Button>
           <Button onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" /> Print QR Code
+            <Printer className="mr-2 h-4 w-4" /> {t('Print QR Code')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -137,6 +139,7 @@ interface TableManagementProps {
   onOrderCreated: (order: Order) => void;
   customers: Customer[];
   setCustomers: (customers: Customer[]) => void;
+  currency: string;
 }
 
 function CancelReservationDialog({
@@ -151,6 +154,7 @@ function CancelReservationDialog({
   updateTableStatus: (tableIds: number[], status: TableStatus, reservationDetails?: TableType['reservationDetails']) => void;
 }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [selectedTableToCancel, setSelectedTableToCancel] = useState<string>('');
 
   const reservedTables = tables.filter(t => t.status === 'Reserved');
@@ -181,9 +185,9 @@ function CancelReservationDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Cancel a Reservation</DialogTitle>
+          <DialogTitle>{t('Cancel a Reservation')}</DialogTitle>
           <DialogDescription>
-            Select a reserved table to cancel its booking.
+            {t('Select a reserved table to cancel its booking.')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -316,7 +320,7 @@ function EditTableDetailsDialog({
   );
 }
 
-export default function TableManagement({ tables, orders, billHistory, updateTableStatus, updateTableDetails, addTable, removeLastTable, occupancyCount, onEditOrder, showOccupancy, setShowOccupancy, initialSelectedTableId, onCreateOrder, onAcceptCustomerOrder, showTableDetailsOnPOS, setShowTableDetailsOnPOS, showReservationTimeOnPOS, setShowReservationTimeOnPOS, customerOrders, onOrderCreated, customers, setCustomers }: TableManagementProps) {
+export default function TableManagement({ tables, orders, billHistory, updateTableStatus, updateTableDetails, addTable, removeLastTable, occupancyCount, onEditOrder, showOccupancy, setShowOccupancy, initialSelectedTableId, onCreateOrder, onAcceptCustomerOrder, showTableDetailsOnPOS, setShowTableDetailsOnPOS, showReservationTimeOnPOS, setShowReservationTimeOnPOS, customerOrders, onOrderCreated, customers, setCustomers, currency = 'Rs.' }: TableManagementProps) {
   const [selectedTable, setSelectedTable] = useState<TableType | null>(null);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [selectedTables, setSelectedTables] = useState<number[]>([]);
@@ -326,6 +330,7 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
   const [isBillHistoryDialogOpen, setIsBillHistoryDialogOpen] = useState(false);
   const [billsForDialog, setBillsForDialog] = useState<Bill[]>([]);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [reservedTableAction, setReservedTableAction] = useState<TableType | null>(null);
   const [occupiedTableAction, setOccupiedTableAction] = useState<TableType | null>(null);
   const [availableTableAction, setAvailableTableAction] = useState<TableType | null>(null);
@@ -450,7 +455,7 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
     const pad = (str: string, len: number, char = ' ') => str.padEnd(len, char);
     const subtotal = orderItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
     const total = subtotal * (1 - discount / 100);
-    const money = (val: number) => `Rs.${val.toFixed(2)}`;
+    const money = (val: number) => `${currency}${val.toFixed(2)}`;
 
     let receiptLines = [];
     receiptLines.push('*************************');
@@ -475,7 +480,7 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
       receiptLines.push('-------------------------');
     }
 
-    receiptLines.push(`${pad('Total:', 25)} ${`Rs.${total.toFixed(2)}`.padStart(10)}`);
+    receiptLines.push(`${pad('Total:', 25)} ${`${currency}${total.toFixed(2)}`.padStart(10)}`);
     receiptLines.push('');
     receiptLines.push('   Thank you for dining!   ');
     receiptLines.push('*************************');
@@ -612,13 +617,13 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
         <CardHeader>
           <div className="flex justify-between items-center gap-4 flex-wrap mb-4">
             <div>
-              <CardTitle>Table Management</CardTitle>
-              <CardDescription>Oversee and manage all tables in your restaurant.</CardDescription>
+              <CardTitle>{t('Table Management')}</CardTitle>
+              <CardDescription>{t('Oversee and manage all tables in your restaurant.')}</CardDescription>
             </div>
             <div className="flex items-center gap-4">
               <Button variant="secondary" className='bg-orange-500 hover:bg-orange-600 text-white' onClick={() => setIsLayoutManagerOpen(true)}>
                 <LayoutTemplate className="mr-2 h-4 w-4" />
-                <span>Manage Tables</span>
+                <span>{t('Manage Tables')}</span>
               </Button>
               {selectedTables.length > 0 && (
                 <div className="flex items-center space-x-2">
@@ -771,7 +776,7 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
             })}
             {filteredTables.length === 0 && (
               <div className="col-span-full text-center text-muted-foreground py-16">
-                No tables with status "{filter}".
+                {t('No tables with status')} "{filter}".
               </div>
             )}
           </div>
@@ -789,12 +794,12 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Table No.</TableHead>
-                    <TableHead>Turnover</TableHead>
-                    <TableHead>Total Revenue</TableHead>
-                    <TableHead>Avg. Order Value</TableHead>
-                    <TableHead>Avg. Duration</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('Table')} No.</TableHead>
+                    <TableHead>{t('Turnover')}</TableHead>
+                    <TableHead>{t('Total Revenue')}</TableHead>
+                    <TableHead>{t('Avg. Order Value')}</TableHead>
+                    <TableHead>{t('Avg. Duration')}</TableHead>
+                    <TableHead className="text-right">{t('Actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1040,18 +1045,19 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
       </Dialog>
 
       <Dialog open={!!reservedTableAction} onOpenChange={() => setReservedTableAction(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Reservation for Table {reservedTableAction?.id}</DialogTitle>
+            <DialogTitle>{t('Reservation for Table')} {reservedTableAction?.id}</DialogTitle>
             <DialogDescription>
-              Guest: {reservedTableAction?.reservationDetails?.name || 'N/A'} at {reservedTableAction?.reservationDetails?.time || 'N/A'}.
+              {t('Guest')}: {reservedTableAction?.reservationDetails?.name || t('N/A')} {t('at')} {reservedTableAction?.reservationDetails?.time || t('N/A')}.
               <br />
-              What would you like to do?
+              {t('What would you like to do?')}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-end gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-4">
             <Button
               variant="destructive"
+              className="w-full"
               onClick={() => {
                 if (reservedTableAction) {
                   updateTableStatus([reservedTableAction.id], 'Available', undefined);
@@ -1060,9 +1066,10 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
               }}
             >
               <BookmarkX className="mr-2 h-4 w-4" />
-              Cancel Reservation
+              {t('Cancel Reservation')}
             </Button>
             <Button
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white"
               onClick={() => {
                 if (reservedTableAction) {
                   const tableId = reservedTableAction.id;
@@ -1077,30 +1084,30 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
               }}
             >
               <UserCheck className="mr-2 h-4 w-4" />
-              Guest Has Arrived
+              {t('Guest Has Arrived')}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!occupiedTableAction} onOpenChange={() => setOccupiedTableAction(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Table {occupiedTableAction?.id} is Occupied</DialogTitle>
+            <DialogTitle>{t('Table')} {occupiedTableAction?.id} {t('is Occupied')}</DialogTitle>
             <DialogDescription>
-              What would you like to do for this table?
+              {t('What would you like to do for this table?')}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-end gap-2">
-            <Button variant="outline" onClick={(e) => {
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-4">
+            <Button variant="outline" className="w-full" onClick={(e) => {
               if (occupiedTableAction) {
                 handleOpenPrintDialog(e, occupiedTableAction);
               }
               setOccupiedTableAction(null);
             }}>
-              <Printer className="mr-2 h-4 w-4" /> Show Bill
+              <Printer className="mr-2 h-4 w-4" /> {t('Show Bill')}
             </Button>
-            <Button variant="outline" onClick={() => {
+            <Button variant="outline" className="w-full" onClick={() => {
               if (occupiedTableAction) {
                 const order = orders.find(o => o.tableId === occupiedTableAction.id && o.status !== 'Completed');
                 if (order) onEditOrder(order);
@@ -1108,9 +1115,9 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
               }
               setOccupiedTableAction(null);
             }}>
-              <Edit className="mr-2 h-4 w-4" /> Edit Order
+              <Edit className="mr-2 h-4 w-4" /> {t('Edit Order')}
             </Button>
-            <Button onClick={() => {
+            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" onClick={() => {
               if (occupiedTableAction) {
                 const order = orders.find(o => o.tableId === occupiedTableAction.id && o.status !== 'Completed');
                 if (order) onEditOrder(order);
@@ -1118,21 +1125,22 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
               }
               setOccupiedTableAction(null);
             }}>
-              <Check className="mr-2 h-4 w-4" /> Go to Payment
+              <Check className="mr-2 h-4 w-4" /> {t('Go to Payment')}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!availableTableAction} onOpenChange={() => setAvailableTableAction(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle>Table {availableTableAction?.id} is Available</DialogTitle>
-            <DialogDescription>What would you like to do?</DialogDescription>
+            <DialogTitle>Table {availableTableAction?.id} {t('is Available')}</DialogTitle>
+            <DialogDescription>{t('What would you like to do?')}</DialogDescription>
           </DialogHeader>
-          <DialogFooter className="sm:justify-end gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-4">
             <Button
               variant="outline"
+              className="w-full"
               onClick={() => {
                 if (availableTableAction) {
                   const tableId = availableTableAction.id;
@@ -1156,10 +1164,11 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
                 }
               }}
             >
-              <UserCheck className="mr-2 h-4 w-4" /> Mark Occupied
+              <UserCheck className="mr-2 h-4 w-4" /> {t('Mark Occupied')}
             </Button>
             <Button
               variant="outline"
+              className="w-full"
               onClick={() => {
                 if (availableTableAction) {
                   setReservationTableId(String(availableTableAction.id));
@@ -1170,9 +1179,10 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
                 }
               }}
             >
-              <Bookmark className="mr-2 h-4 w-4" /> Reserve Table
+              <Bookmark className="mr-2 h-4 w-4" /> {t('Reserve Table')}
             </Button>
             <Button
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white"
               onClick={() => {
                 if (availableTableAction) {
                   onCreateOrder(availableTableAction.id);
@@ -1180,9 +1190,9 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
                 setAvailableTableAction(null);
               }}
             >
-              <CookingPot className="mr-2 h-4 w-4" /> Take New Order
+              <CookingPot className="mr-2 h-4 w-4" /> {t('Take New Order')}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 

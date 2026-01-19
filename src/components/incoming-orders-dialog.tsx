@@ -28,12 +28,15 @@ interface GeneratedKOT {
   items: any[];
 }
 
+import { useLanguage } from '@/contexts/language-context';
+
 export default function IncomingOrdersDialog({
   isOpen,
   onOpenChange,
   customerOrders,
   onAccept,
 }: IncomingOrdersDialogProps) {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const db = useFirestore();
   const [generatedKots, setGeneratedKots] = useState<{ tableId: number; kots: GeneratedKOT[] } | null>(null);
@@ -85,7 +88,7 @@ export default function IncomingOrdersDialog({
   const handleDismiss = (orderId: string) => {
     const orderRef = doc(db, 'customerOrders', orderId);
     updateDoc(orderRef, { status: 'handled' });
-    toast({ title: 'Order dismissed.' });
+    toast({ title: t('Order dismissed.') });
     if (customerOrders.length === 1) {
       onOpenChange(false);
     }
@@ -105,9 +108,9 @@ export default function IncomingOrdersDialog({
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Print KOTs - Table {generatedKots.tableId}</DialogTitle>
+            <DialogTitle>{t('Print KOTs - Table')} {generatedKots.tableId}</DialogTitle>
             <DialogDescription>
-              Please print each ticket to its designated printer.
+              {t('Please print each ticket to its designated printer.')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -115,13 +118,13 @@ export default function IncomingOrdersDialog({
               <div key={idx} className="flex items-center justify-between border p-3 rounded">
                 <span className="font-bold">{kot.title}</span>
                 <Button size="sm" onClick={() => handlePrintKot(kot, idx)}>
-                  <Printer className="mr-2 h-4 w-4" /> Print
+                  <Printer className="mr-2 h-4 w-4" /> {t('Print')}
                 </Button>
               </div>
             ))}
           </div>
           <DialogFooter>
-            <Button onClick={handleClose}>Done</Button>
+            <Button onClick={handleClose}>{t('Done')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -132,9 +135,9 @@ export default function IncomingOrdersDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Incoming Customer Orders</DialogTitle>
+          <DialogTitle>{t('Incoming Customer Orders')}</DialogTitle>
           <DialogDescription>
-            New orders placed by customers via QR code.
+            {t('New orders placed by customers via QR code.')}
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] -mx-6 px-6">
@@ -143,7 +146,7 @@ export default function IncomingOrdersDialog({
               customerOrders.map(order => (
                 <div key={order.id} className="p-4 border rounded-lg">
                   <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-bold text-lg">Table {order.tableId}</h3>
+                    <h3 className="font-bold text-lg">{t('Table')} {order.tableId}</h3>
                     <p className="text-xs text-muted-foreground">
                       {formatDistanceToNow(order.createdAt.toDate(), { addSuffix: true })}
                     </p>
@@ -151,10 +154,10 @@ export default function IncomingOrdersDialog({
                   <ul className="list-disc pl-5 space-y-1 text-sm mb-4">
                     {order.items.map(item => (
                       <li key={item.name}>
-                        {item.quantity}x {item.name}
+                        {item.quantity}x {t(item.name)}
                         {item.instruction && (
                           <div className="text-xs text-orange-600 font-medium italic mt-0.5">
-                            Note: {item.instruction}
+                            {t('Note:')} {item.instruction}
                           </div>
                         )}
                       </li>
@@ -166,26 +169,26 @@ export default function IncomingOrdersDialog({
                       variant="ghost"
                       onClick={() => handleDismiss(order.id)}
                     >
-                      <X className="mr-2 h-4 w-4" /> Dismiss
+                      <X className="mr-2 h-4 w-4" /> {t('Dismiss')}
                     </Button>
                     <Button
                       size="sm"
                       onClick={() => handleAccept(order)}
                     >
-                      <Check className="mr-2 h-4 w-4" /> Accept & Print KOTs
+                      <Check className="mr-2 h-4 w-4" /> {t('Accept & Print KOTs')}
                     </Button>
                   </div>
                 </div>
               ))
             ) : (
               <p className="text-center text-muted-foreground py-16">
-                No incoming orders at the moment.
+                {t('No incoming orders at the moment.')}
               </p>
             )}
           </div>
         </ScrollArea>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

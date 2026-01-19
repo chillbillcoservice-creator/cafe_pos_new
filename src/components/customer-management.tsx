@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLanguage } from '@/contexts/language-context';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -24,10 +25,11 @@ interface CustomerManagementProps {
   billHistory: Bill[];
   tables: TableType[];
   customers: Customer[];
-  setCustomers: (customers: Customer[]) => void;
+  setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
   pendingBills: PendingBill[];
   eventBookings: EventBooking[];
-  setEventBookings: (bookings: EventBooking[]) => void;
+  setEventBookings: React.Dispatch<React.SetStateAction<EventBooking[]>>;
+  currency: string;
 }
 
 function AddOrEditCustomerDialog({
@@ -41,6 +43,7 @@ function AddOrEditCustomerDialog({
   onSave: (customer: Omit<Customer, 'id' | 'firstSeen' | 'lastSeen' | 'totalVisits' | 'totalSpent'> & { id?: string }) => void;
   existingCustomer: Customer | null;
 }) {
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -77,29 +80,29 @@ function AddOrEditCustomerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{existingCustomer ? 'Edit Customer' : 'Add New Customer'}</DialogTitle>
+          <DialogTitle>{existingCustomer ? t('Edit Customer') : t('Add New Customer')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="customer-name">Customer Name</Label>
-            <Input id="customer-name" value={name} onChange={e => setName(e.target.value)} placeholder="e.g., Jane Doe" />
+            <Label htmlFor="customer-name">{t('Customer Name')}</Label>
+            <Input id="customer-name" value={name} onChange={e => setName(e.target.value)} placeholder={t('e.g., Jane Doe')} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="customer-phone">Phone Number</Label>
-            <Input id="customer-phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder="e.g., 9876543210" />
+            <Label htmlFor="customer-phone">{t('Phone Number')}</Label>
+            <Input id="customer-phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder={t('e.g., 9876543210')} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="customer-email">Email (Optional)</Label>
+            <Label htmlFor="customer-email">{t('Email (Optional)')}</Label>
             <Input id="customer-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="e.g., jane.d@example.com" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="customer-address">Address (Optional)</Label>
-            <Textarea id="customer-address" value={address} onChange={e => setAddress(e.target.value)} placeholder="Full Address" />
+            <Label htmlFor="customer-address">{t('Address (Optional)')}</Label>
+            <Textarea id="customer-address" value={address} onChange={e => setAddress(e.target.value)} placeholder={t('Full Address')} />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave}>Save Customer</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
+          <Button onClick={handleSave}>{t('Save Customer')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -117,12 +120,13 @@ function ReservationHistoryDialog({
   customer: Customer;
   reservations: TableType[];
 }) {
+  const { t } = useLanguage();
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Reservation History for {customer.name}</DialogTitle>
-          <DialogDescription>A log of all past and current table reservations.</DialogDescription>
+          <DialogTitle>{t('Reservation History for')} {customer.name}</DialogTitle>
+          <DialogDescription>{t('A log of all past and current table reservations.')}</DialogDescription>
         </DialogHeader>
         <div className="max-h-80 overflow-y-auto py-4">
           {reservations.length > 0 ? (
@@ -143,11 +147,11 @@ function ReservationHistoryDialog({
               </TableBody>
             </Table>
           ) : (
-            <p className="text-center text-muted-foreground pt-8">No reservation history found for this customer.</p>
+            <p className="text-center text-muted-foreground pt-8">{t('No reservation history found for this customer.')}</p>
           )}
         </div>
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>Close</Button>
+          <Button onClick={() => onOpenChange(false)}>{t('Close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -159,12 +163,15 @@ function CustomerHistoryDialog({
   onOpenChange,
   customer,
   bills,
+  currency,
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   customer: Customer;
   bills: Bill[];
+  currency: string;
 }) {
+  const { t } = useLanguage();
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
 
   const handlePrintBill = (bill: Bill) => {
@@ -199,9 +206,9 @@ function CustomerHistoryDialog({
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Bill History for {customer.name}</DialogTitle>
+            <DialogTitle>{t('Bill History for')} {customer.name}</DialogTitle>
             <DialogDescription>
-              A log of all past transactions for this customer.
+              {t('A log of all past transactions for this customer.')}
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[60vh] overflow-y-auto py-4">
@@ -209,10 +216,10 @@ function CustomerHistoryDialog({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Bill ID</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="text-center">Actions</TableHead>
+                    <TableHead>{t('Bill ID')}</TableHead>
+                    <TableHead>{t('Date')}</TableHead>
+                    <TableHead className="text-right">{t('Amount')}</TableHead>
+                    <TableHead className="text-center">{t('Actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -221,7 +228,7 @@ function CustomerHistoryDialog({
                       <TableCell>{bill.id}</TableCell>
                       <TableCell>{format(new Date(bill.timestamp), "PPP p")}</TableCell>
                       <TableCell className="text-right font-mono">
-                        Rs.{bill.total.toFixed(2)}
+                        {currency}{bill.total.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-center">
                         <Button variant="ghost" size="icon" onClick={() => setSelectedBill(bill)}>
@@ -250,10 +257,10 @@ function CustomerHistoryDialog({
       <Dialog open={!!selectedBill} onOpenChange={() => setSelectedBill(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Receipt for Bill #{selectedBill?.id}</DialogTitle>
+            <DialogTitle>{t('Receipt for Bill #')}{selectedBill?.id}</DialogTitle>
             {selectedBill && (
               <DialogDescription>
-                Date: {format(new Date(selectedBill.timestamp), 'PPP p')}
+                {t('Date')}: {format(new Date(selectedBill.timestamp), 'PPP p')}
               </DialogDescription>
             )}
           </DialogHeader>
@@ -267,8 +274,10 @@ function CustomerHistoryDialog({
 }
 
 
-export default function CustomerManagement({ billHistory, tables, customers: initialCustomers, setCustomers, pendingBills, eventBookings, setEventBookings }: CustomerManagementProps) {
+export default function CustomerManagement({ billHistory, tables, customers: initialCustomers, setCustomers, pendingBills, eventBookings, setEventBookings, currency = 'Rs.' }: CustomerManagementProps) {
+  const { t } = useLanguage();
   const { toast } = useToast();
+
 
   const [isAddOrEditDialogOpen, setIsAddOrEditDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -277,35 +286,35 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewingReservationsFor, setViewingReservationsFor] = useState<Customer | null>(null);
   const [viewingHistoryFor, setViewingHistoryFor] = useState<Customer | null>(null);
-  
+
   const [eventName, setEventName] = useState('');
   const [bookingName, setBookingName] = useState('');
   const [bookingMobile, setBookingMobile] = useState('');
   const [eventDate, setEventDate] = useState<Date | undefined>();
   const [guestCount, setGuestCount] = useState('');
   const [advancePaid, setAdvancePaid] = useState('');
-  
+
 
   const aggregatedCustomers = useMemo(() => {
     const customerMap = new Map<string, Customer>();
     const deletedCustomerIds = new Set(initialCustomers.filter(c => c.isDeleted).map(c => c.id));
 
     initialCustomers.forEach(cust => {
-        if (!cust.isDeleted) {
-            customerMap.set(cust.id, { 
-              ...cust,
-              totalVisits: cust.totalVisits || 0,
-              totalSpent: cust.totalSpent || 0,
-              lastSeen: cust.lastSeen || cust.firstSeen,
-             });
-        }
+      if (!cust.isDeleted) {
+        customerMap.set(cust.id, {
+          ...cust,
+          totalVisits: cust.totalVisits || 0,
+          totalSpent: cust.totalSpent || 0,
+          lastSeen: cust.lastSeen || cust.firstSeen,
+        });
+      }
     });
 
     billHistory.forEach(bill => {
       if (!bill.customerDetails || !bill.customerDetails.phone || deletedCustomerIds.has(bill.customerDetails.phone)) {
         return;
       }
-      
+
       const { phone } = bill.customerDetails;
       const { name, email, address } = bill.customerDetails;
       const existing = customerMap.get(phone);
@@ -331,11 +340,11 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
         });
       }
     });
-    
+
     pendingBills.filter(pb => pb.type === 'customer').forEach(pBill => {
       if (pBill.mobile && !deletedCustomerIds.has(pBill.mobile) && !customerMap.has(pBill.mobile)) {
         const firstTxDate = pBill.transactions.length > 0 ? new Date(pBill.transactions[0].date) : new Date();
-         customerMap.set(pBill.mobile, {
+        customerMap.set(pBill.mobile, {
           id: pBill.mobile,
           phone: pBill.mobile,
           name: pBill.name,
@@ -348,7 +357,7 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
         });
       }
     });
-    
+
     return Array.from(customerMap.values());
   }, [billHistory, pendingBills, initialCustomers]);
 
@@ -370,8 +379,8 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
     let filtered = aggregatedCustomers;
     if (searchTerm) {
       const lowerTerm = searchTerm.toLowerCase();
-      filtered = filtered.filter(c => 
-        c.name.toLowerCase().includes(lowerTerm) || 
+      filtered = filtered.filter(c =>
+        c.name.toLowerCase().includes(lowerTerm) ||
         c.phone.includes(lowerTerm)
       );
     }
@@ -387,9 +396,9 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
         const valA = a[sortField];
         const valB = b[sortField];
         if (valA! > valB!) {
-            comparison = 1;
+          comparison = 1;
         } else if (valA! < valB!) {
-            comparison = -1;
+          comparison = -1;
         }
       }
       return sortDirection === 'asc' ? comparison : -comparison;
@@ -406,84 +415,84 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
   };
 
 
-  const handleSaveCustomer = (customerData: Omit<Customer, 'firstSeen' | 'lastSeen' | 'totalVisits' | 'totalSpent'>) => {
+  const handleSaveCustomer = (customerData: Omit<Customer, 'id' | 'firstSeen' | 'lastSeen' | 'totalVisits' | 'totalSpent'> & { id?: string }) => {
     const { id, ...data } = customerData;
     const docId = id || data.phone;
-    
+
     if (!docId) {
-        toast({ variant: 'destructive', title: 'Phone number is required.' });
-        return;
+      toast({ variant: 'destructive', title: t('Phone number is required.') });
+      return;
     }
-    
+
     const existingCustomerIndex = initialCustomers.findIndex(c => c.id === docId);
     let newCustomers;
 
     if (existingCustomerIndex > -1) {
-        newCustomers = [...initialCustomers];
-        newCustomers[existingCustomerIndex] = { ...newCustomers[existingCustomerIndex], ...data, isDeleted: false };
+      newCustomers = [...initialCustomers];
+      newCustomers[existingCustomerIndex] = { ...newCustomers[existingCustomerIndex], ...data, isDeleted: false };
     } else {
-        const newCustomer: Customer = {
-          id: docId,
-          ...data,
-          firstSeen: new Date(),
-          lastSeen: new Date(),
-          totalVisits: 0,
-          totalSpent: 0,
-          isDeleted: false,
-        };
-        newCustomers = [...initialCustomers, newCustomer];
+      const newCustomer: Customer = {
+        id: docId,
+        ...data,
+        firstSeen: new Date(),
+        lastSeen: new Date(),
+        totalVisits: 0,
+        totalSpent: 0,
+        isDeleted: false,
+      };
+      newCustomers = [...initialCustomers, newCustomer];
     }
-    
+
     setCustomers(newCustomers);
-    toast({ title: id ? 'Customer Updated' : 'Customer Saved' });
+    toast({ title: id ? t('Customer Updated') : t('Customer Saved') });
   };
 
   const handleDeleteCustomer = (customerId: string) => {
-      const customerIndex = initialCustomers.findIndex(c => c.id === customerId);
-      
-      let newCustomers;
-      if (customerIndex > -1) {
-          newCustomers = [...initialCustomers];
-          newCustomers[customerIndex].isDeleted = true;
+    const customerIndex = initialCustomers.findIndex(c => c.id === customerId);
+
+    let newCustomers;
+    if (customerIndex > -1) {
+      newCustomers = [...initialCustomers];
+      newCustomers[customerIndex].isDeleted = true;
+    } else {
+      const customerFromBills = aggregatedCustomers.find(c => c.id === customerId);
+      if (customerFromBills) {
+        const newEntry: Customer = {
+          ...customerFromBills,
+          totalVisits: 0, // Reset derived stats
+          totalSpent: 0,
+          isDeleted: true
+        };
+        newCustomers = [...initialCustomers, newEntry];
       } else {
-          const customerFromBills = aggregatedCustomers.find(c => c.id === customerId);
-          if (customerFromBills) {
-            const newEntry: Customer = {
-              ...customerFromBills,
-              totalVisits: 0, // Reset derived stats
-              totalSpent: 0,
-              isDeleted: true
-            };
-            newCustomers = [...initialCustomers, newEntry];
-          } else {
-            toast({ title: 'Error', description: 'Could not find customer to delete.' });
-            return;
-          }
+        toast({ title: t('Error'), description: t('Could not find customer to delete.') });
+        return;
       }
-      
-      setCustomers(newCustomers);
-      toast({ title: 'Customer Deleted', description: 'They will no longer appear in the CRM.' });
+    }
+
+    setCustomers(newCustomers);
+    toast({ title: t('Customer Deleted'), description: t('They will no longer appear in the CRM.') });
   };
 
   const handleBookEvent = () => {
     if (!eventName || !bookingName || !eventDate) {
-      toast({ variant: 'destructive', title: 'Missing Information', description: 'Please fill out event name, booking name, and date.' });
+      toast({ variant: 'destructive', title: t('Missing Information'), description: t('Please fill out event name, booking name, and date.') });
       return;
     }
-    
-    const newBooking: EventBooking = {
-        id: new Date().toISOString(),
-        eventName,
-        bookingName,
-        bookingMobile,
-        eventDate,
-        guestCount,
-        advancePaid,
-    };
-    
-    setEventBookings(prev => [...prev, newBooking].sort((a,b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()));
 
-    toast({ title: 'Event Booked!', description: `"${eventName}" for ${bookingName} on ${format(eventDate, 'PPP')}`});
+    const newBooking: EventBooking = {
+      id: new Date().toISOString(),
+      eventName,
+      bookingName,
+      bookingMobile,
+      eventDate,
+      guestCount,
+      advancePaid,
+    };
+
+    setEventBookings(prev => [...prev, newBooking].sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()));
+
+    toast({ title: t('Event Booked!'), description: `"${eventName}" for ${bookingName} on ${format(eventDate, 'PPP')}` });
 
     setEventName('');
     setBookingName('');
@@ -495,7 +504,7 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
 
   const handleDeleteEvent = (eventId: string) => {
     setEventBookings(prev => prev.filter(event => event.id !== eventId));
-    toast({ title: 'Event Removed' });
+    toast({ title: t('Event Removed') });
   };
 
   const isValidDate = (date: any) => {
@@ -520,58 +529,58 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Book an Event</CardTitle>
-            <CardDescription>Enter the details for the new event booking.</CardDescription>
+            <CardTitle>{t('Book an Event')}</CardTitle>
+            <CardDescription>{t('Enter the details for the new event booking.')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="event-name">Event Name</Label>
-              <Input id="event-name" value={eventName} onChange={e => setEventName(e.target.value)} placeholder="e.g., Birthday Party" />
+              <Label htmlFor="event-name">{t('Event Name')}</Label>
+              <Input id="event-name" value={eventName} onChange={e => setEventName(e.target.value)} placeholder={t('e.g., Birthday Party')} />
             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="booking-name">Booking Name</Label>
-                <Input id="booking-name" value={bookingName} onChange={e => setBookingName(e.target.value)} placeholder="e.g., Mr. Sharma" />
+                <Label htmlFor="booking-name">{t('Booking Name')}</Label>
+                <Input id="booking-name" value={bookingName} onChange={e => setBookingName(e.target.value)} placeholder={t('e.g., Mr. Sharma')} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="booking-mobile">Mobile Number</Label>
-                <Input id="booking-mobile" value={bookingMobile} onChange={e => setBookingMobile(e.target.value)} placeholder="e.g., 9876543210" />
+                <Label htmlFor="booking-mobile">{t('Mobile Number')}</Label>
+                <Input id="booking-mobile" value={bookingMobile} onChange={e => setBookingMobile(e.target.value)} placeholder={t('e.g., 9876543210')} />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="event-date">Date of Event</Label>
-                 <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !eventDate && "text-muted-foreground")}>
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {eventDate ? format(eventDate, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={eventDate} onSelect={setEventDate} initialFocus /></PopoverContent>
+                <Label htmlFor="event-date">{t('Date of Event')}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !eventDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {eventDate ? format(eventDate, "PPP") : <span>{t('Pick a date')}</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={eventDate} onSelect={setEventDate} initialFocus /></PopoverContent>
                 </Popover>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="guest-count">Number of Guests</Label>
+                <Label htmlFor="guest-count">{t('Number of Guests')}</Label>
                 <Input id="guest-count" type="number" value={guestCount} onChange={e => setGuestCount(e.target.value)} placeholder="e.g., 25" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="advance-paid">Advance Paid (Rs.)</Label>
+              <Label htmlFor="advance-paid">{t('Advance Paid')} ({currency})</Label>
               <Input id="advance-paid" type="number" value={advancePaid} onChange={e => setAdvancePaid(e.target.value)} placeholder="e.g., 5000" />
             </div>
           </CardContent>
           <CardFooter>
-              <Button className="w-full" onClick={handleBookEvent}>
-                <Bookmark className="mr-2 h-4 w-4" /> Book Event
-              </Button>
+            <Button className="w-full" onClick={handleBookEvent}>
+              <Bookmark className="mr-2 h-4 w-4" /> {t('Book Event')}
+            </Button>
           </CardFooter>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming Events</CardTitle>
-            <CardDescription>A list of all your scheduled events.</CardDescription>
+            <CardTitle>{t('Upcoming Events')}</CardTitle>
+            <CardDescription>{t('A list of all your scheduled events.')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[26.5rem]">
@@ -579,39 +588,39 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
                 <div className="space-y-4">
                   {eventBookings.map((event) => (
                     <Card key={event.id} className="relative p-4">
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                             <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive h-7 w-7">
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                              <AlertDialogHeader>
-                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                      This will permanently delete the event "{event.eventName}". This action cannot be undone.
-                                  </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteEvent(event.id)}>Delete</AlertDialogAction>
-                              </AlertDialogFooter>
-                          </AlertDialogContent>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-destructive h-7 w-7">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('Are you sure?')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t('This will permanently delete the event')} "{event.eventName}". {t('This action cannot be undone.')}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteEvent(event.id)}>{t('Delete')}</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
                       </AlertDialog>
                       <CardTitle className="text-lg">{event.eventName}</CardTitle>
                       <CardDescription>{format(new Date(event.eventDate), 'EEEE, PPP')}</CardDescription>
                       <Separator className="my-2" />
                       <div className="text-sm space-y-1">
-                        <p><strong>Booked for:</strong> {event.bookingName} ({event.bookingMobile})</p>
-                        <p><strong>Guests:</strong> {event.guestCount}</p>
-                        <p><strong>Advance Paid:</strong> Rs. {event.advancePaid || '0'}</p>
+                        <p><strong>{t('Booked for')}:</strong> {event.bookingName} ({event.bookingMobile})</p>
+                        <p><strong>{t('Guests')}:</strong> {event.guestCount}</p>
+                        <p><strong>{t('Advance Paid')}:</strong> {currency} {event.advancePaid || '0'}</p>
                       </div>
                     </Card>
                   ))}
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full text-muted-foreground">
-                  <p>No upcoming events booked.</p>
+                  <p>{t('No upcoming events booked.')}</p>
                 </div>
               )}
             </ScrollArea>
@@ -623,101 +632,101 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
         <CardHeader>
           <div className="flex justify-between items-center gap-4 flex-wrap">
             <div>
-              <CardTitle>Customer Database</CardTitle>
-              <CardDescription>View and manage your customers.</CardDescription>
+              <CardTitle>{t('Customer Database')}</CardTitle>
+              <CardDescription>{t('View and manage your customers.')}</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name or phone..."
+                  placeholder={t('Search by name or phone...')}
                   className="pl-9"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-               <Button onClick={() => { setEditingCustomer(null); setIsAddOrEditDialogOpen(true); }}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add New Customer
+              <Button onClick={() => { setEditingCustomer(null); setIsAddOrEditDialogOpen(true); }}>
+                <PlusCircle className="mr-2 h-4 w-4" /> {t('Add New Customer')}
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-           <ScrollArea className="h-[calc(100vh-28rem)]">
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <ScrollArea className="h-[calc(100vh-28rem)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {sortedAndFilteredCustomers.map(customer => {
                 const reservations = customerReservations.get(customer.phone) || [];
                 return (
                   <Card key={customer.id} className="flex flex-col">
                     <CardHeader>
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <CardTitle className="text-lg">{customer.name}</CardTitle>
-                                <CardDescription>{customer.phone}</CardDescription>
-                            </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCustomer(customer); setIsAddOrEditDialogOpen(true); }}>
-                                <Edit className="h-4 w-4" />
-                            </Button>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg">{customer.name}</CardTitle>
+                          <CardDescription>{customer.phone}</CardDescription>
                         </div>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCustomer(customer); setIsAddOrEditDialogOpen(true); }}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="flex-grow space-y-4">
-                       <div className="grid grid-cols-3 gap-2 text-center">
-                          <div className="p-2 bg-muted rounded-md">
-                            <p className="text-xs text-muted-foreground">Visits</p>
-                            <p className="text-lg font-bold">{customer.totalVisits}</p>
-                          </div>
-                           <div className="p-2 bg-muted rounded-md col-span-2">
-                            <p className="text-xs text-muted-foreground">Total Spent</p>
-                            <p className="text-lg font-bold font-mono">Rs.{customer.totalSpent.toFixed(2)}</p>
-                          </div>
-                       </div>
-                       <div className="text-sm space-y-1">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <CalendarDays className="h-4 w-4"/>
-                            <span>Last seen: {isValidDate(customer.lastSeen) ? format(new Date(customer.lastSeen), 'MMM d, yyyy') : 'N/A'}</span>
-                          </div>
-                           <div className="flex items-center gap-2 text-muted-foreground">
-                            <Mail className="h-4 w-4"/>
-                            <span>{customer.email || 'No email'}</span>
-                          </div>
-                       </div>
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div className="p-2 bg-muted rounded-md">
+                          <p className="text-xs text-muted-foreground">{t('Visits')}</p>
+                          <p className="text-lg font-bold">{customer.totalVisits}</p>
+                        </div>
+                        <div className="p-2 bg-muted rounded-md col-span-2">
+                          <p className="text-xs text-muted-foreground">{t('Total Spent')}</p>
+                          <p className="text-lg font-bold font-mono">{currency}{customer.totalSpent.toFixed(2)}</p>
+                        </div>
+                      </div>
+                      <div className="text-sm space-y-1">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <CalendarDays className="h-4 w-4" />
+                          <span>{t('Last seen:')} {isValidDate(customer.lastSeen) ? format(new Date(customer.lastSeen), 'MMM d, yyyy') : 'N/A'}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Mail className="h-4 w-4" />
+                          <span>{customer.email || t('No email')}</span>
+                        </div>
+                      </div>
                     </CardContent>
                     <CardFooter className="grid grid-cols-3 gap-2">
-                        <Button variant="outline" className="w-full" onClick={() => setViewingHistoryFor(customer)}>
-                            <ShoppingBag className="mr-2 h-4 w-4" /> Bills
-                        </Button>
-                        <Button variant="outline" className="w-full relative" onClick={() => setViewingReservationsFor(customer)}>
-                             <Briefcase className="mr-2 h-4 w-4" /> Events
-                             {reservations.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary" />}
-                        </Button>
-                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" className="w-full">
-                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This action will permanently delete {customer.name} from your customer list. Their historical billing data will remain, but they will no longer appear in the CRM.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeleteCustomer(customer.id)}>Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
+                      <Button variant="outline" className="w-full" onClick={() => setViewingHistoryFor(customer)}>
+                        <ShoppingBag className="mr-2 h-4 w-4" /> {t('Bills')}
+                      </Button>
+                      <Button variant="outline" className="w-full relative" onClick={() => setViewingReservationsFor(customer)}>
+                        <Briefcase className="mr-2 h-4 w-4" /> {t('Events')}
+                        {reservations.length > 0 && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary" />}
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="w-full">
+                            <Trash2 className="mr-2 h-4 w-4" /> {t('Delete')}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('Are you sure?')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t('This action will permanently delete')} {customer.name} {t('from your customer list. Their historical billing data will remain, but they will no longer appear in the CRM.')}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteCustomer(customer.id)}>{t('Delete')}</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </CardFooter>
                   </Card>
                 );
               })}
-             </div>
-           </ScrollArea>
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
-      
+
       {viewingReservationsFor && (
         <ReservationHistoryDialog
           isOpen={!!viewingReservationsFor}
@@ -726,16 +735,17 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
           reservations={customerReservations.get(viewingReservationsFor.phone) || []}
         />
       )}
-       {viewingHistoryFor && (
+      {viewingHistoryFor && (
         <CustomerHistoryDialog
           isOpen={!!viewingHistoryFor}
           onOpenChange={(open) => !open && setViewingHistoryFor(null)}
           customer={viewingHistoryFor}
           bills={getBillsForCustomer(viewingHistoryFor.phone)}
+          currency={currency}
         />
       )}
 
-      <AddOrEditCustomerDialog 
+      <AddOrEditCustomerDialog
         open={isAddOrEditDialogOpen}
         onOpenChange={setIsAddOrEditDialogOpen}
         onSave={handleSaveCustomer}

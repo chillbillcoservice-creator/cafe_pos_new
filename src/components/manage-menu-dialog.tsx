@@ -50,6 +50,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { scanMenu, type ScanMenuOutput } from '@/ai/flows/scan-menu-flow';
 import { Alert, AlertTitle, AlertDescription } from './ui/alert';
 import { Checkbox } from './ui/checkbox';
+import { useLanguage } from '@/contexts/language-context';
 
 
 interface EditIngredientsDialogProps {
@@ -61,6 +62,7 @@ interface EditIngredientsDialogProps {
 }
 
 function EditIngredientsDialog({ isOpen, onOpenChange, menuItem, inventory, onSave }: EditIngredientsDialogProps) {
+  const { t } = useLanguage();
   const [ingredients, setIngredients] = useState<IngredientItem[]>([]);
   const [selectedIngredient, setSelectedIngredient] = useState<string>('');
   const [quantity, setQuantity] = useState<string>('');
@@ -88,7 +90,7 @@ function EditIngredientsDialog({ isOpen, onOpenChange, menuItem, inventory, onSa
 
   const handleAddIngredient = () => {
     if (!selectedIngredient || !quantity) {
-      alert("Please select an ingredient and enter a quantity.");
+      alert(t("Please select an ingredient and enter a quantity."));
       return;
     }
     const newIngredient: IngredientItem = {
@@ -116,14 +118,14 @@ function EditIngredientsDialog({ isOpen, onOpenChange, menuItem, inventory, onSa
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Ingredients for "{menuItem.name}"</DialogTitle>
+          <DialogTitle>{t('Edit Ingredients for')} "{menuItem.name}"</DialogTitle>
           <DialogDescription className="italic text-primary">
-            Defining ingredients helps you track inventory and know the status of your stock.
+            {t('Defining ingredients helps you track inventory and know the status of your stock.')}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4 space-y-4">
           <div>
-            <h4 className="font-semibold mb-2">Current Ingredients</h4>
+            <h4 className="font-semibold mb-2">{t('Current Ingredients')}</h4>
             <div className="space-y-2 max-h-40 overflow-y-auto border p-2 rounded-md">
               {ingredients.length > 0 ? ingredients.map((ingredient, index) => {
                 const inventoryItem = inventory.find(i => i.id === ingredient.inventoryItemId);
@@ -139,19 +141,19 @@ function EditIngredientsDialog({ isOpen, onOpenChange, menuItem, inventory, onSa
                   </div>
                 );
               }) : (
-                <p className="text-sm text-muted-foreground text-center p-4">No ingredients in this recipe yet.</p>
+                <p className="text-sm text-muted-foreground text-center p-4">{t('No ingredients in this recipe yet.')}</p>
               )}
             </div>
           </div>
           <Separator />
           <div>
-            <h4 className="font-semibold mb-2">Add New Ingredient</h4>
+            <h4 className="font-semibold mb-2">{t('Add New Ingredient')}</h4>
             <div className="flex items-end gap-2">
               <div className="flex-grow space-y-1">
-                <Label htmlFor="ingredient-select">Ingredient</Label>
+                <Label htmlFor="ingredient-select">{t('Ingredient')}</Label>
                 <Select value={selectedIngredient} onValueChange={setSelectedIngredient}>
                   <SelectTrigger id="ingredient-select">
-                    <SelectValue placeholder="Select from inventory" />
+                    <SelectValue placeholder={t('Select from inventory')} />
                   </SelectTrigger>
                   <SelectContent>
                     {inventory.map(invItem => (
@@ -161,7 +163,7 @@ function EditIngredientsDialog({ isOpen, onOpenChange, menuItem, inventory, onSa
                 </Select>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="ingredient-quantity">Quantity</Label>
+                <Label htmlFor="ingredient-quantity">{t('Quantity')}</Label>
                 <Input
                   id="ingredient-quantity"
                   type="number"
@@ -172,7 +174,7 @@ function EditIngredientsDialog({ isOpen, onOpenChange, menuItem, inventory, onSa
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="ingredient-unit">Unit</Label>
+                <Label htmlFor="ingredient-unit">{t('Unit')}</Label>
                 <Select value={unit} onValueChange={(value) => setUnit(value as IngredientItem['unit'])}>
                   <SelectTrigger id="ingredient-unit" className="w-[80px]">
                     <SelectValue />
@@ -182,13 +184,13 @@ function EditIngredientsDialog({ isOpen, onOpenChange, menuItem, inventory, onSa
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleAddIngredient}><PlusCircle className="mr-2 h-4 w-4" />Add</Button>
+              <Button onClick={handleAddIngredient}><PlusCircle className="mr-2 h-4 w-4" />{t('Add')}</Button>
             </div>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Skip for Now</Button>
-          <Button onClick={handleSaveIngredients}>Save Ingredients</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Skip for Now')}</Button>
+          <Button onClick={handleSaveIngredients}>{t('Save Ingredients')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -201,9 +203,11 @@ interface EditItemDialogProps {
   onOpenChange: (open: boolean) => void;
   item: MenuItem;
   onSave: (oldName: string, newItem: MenuItem) => void;
+  currency?: string;
 }
 
-function EditItemDialog({ isOpen, onOpenChange, item, onSave }: EditItemDialogProps) {
+function EditItemDialog({ isOpen, onOpenChange, item, onSave, currency = 'Rs.' }: EditItemDialogProps) {
+  const { t } = useLanguage();
   const [name, setName] = useState(item.name);
   const [price, setPrice] = useState(String(item.price));
   const [isVeg, setIsVeg] = useState(item.isVeg || false);
@@ -239,47 +243,47 @@ function EditItemDialog({ isOpen, onOpenChange, item, onSave }: EditItemDialogPr
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Item</DialogTitle>
+          <DialogTitle>{t('Edit Item')}</DialogTitle>
           <DialogDescription>
-            Update the details for "{item.name}".
+            {t('Update the details for')} "{item.name}".
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-item-name">Item Name</Label>
+            <Label htmlFor="edit-item-name">{t('Item Name')}</Label>
             <Input id="edit-item-name" value={name} onChange={e => setName(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-item-price">Price</Label>
+            <Label htmlFor="edit-item-price">{t('Price')}</Label>
             <Input id="edit-item-price" type="number" value={price} onChange={e => setPrice(e.target.value)} />
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox id="edit-item-veg" checked={isVeg} onCheckedChange={(checked) => setIsVeg(checked === true)} />
             <Label htmlFor="edit-item-veg" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2">
-              Vegetarian
+              {t('Vegetarian')}
               <div className={cn("h-2 w-2 rounded-full", isVeg ? "bg-green-600" : "bg-red-600")} />
             </Label>
           </div>
         </div>
         <Separator />
         <div className="space-y-2">
-          <h4 className="font-medium flex items-center gap-2"><History className="h-4 w-4" /> Change History</h4>
+          <h4 className="font-medium flex items-center gap-2"><History className="h-4 w-4" /> {t('Change History')}</h4>
           {item.history && item.history.length > 0 ? (
             <div className="max-h-40 overflow-y-auto space-y-2 text-sm text-muted-foreground pr-2">
               {item.history.slice().reverse().map((record, index) => (
                 <div key={index} className="p-2 bg-muted/50 rounded-md">
-                  <p><strong>Name:</strong> {record.name}, <strong>Price:</strong> Rs.{record.price}</p>
+                  <p><strong>Name:</strong> {record.name}, <strong>Price:</strong> {currency}{record.price}</p>
                   <p className="text-xs">{format(new Date(record.changedAt), "PPP p")}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No previous edits recorded.</p>
+            <p className="text-sm text-muted-foreground">{t('No previous edits recorded.')}</p>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
+          <Button onClick={handleSave}>{t('Save Changes')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -296,6 +300,7 @@ interface ManageMenuDialogProps {
   setInventory: (inventory: InventoryItem[]) => void;
   categoryColors: Record<string, string>;
   setCategoryColors: (colors: Record<string, string>) => void;
+  currency?: string;
 }
 
 const slugify = (text: string) => {
@@ -319,7 +324,9 @@ export function ManageMenuDialog({
   setInventory,
   categoryColors,
   setCategoryColors,
+  currency = 'Rs.',
 }: ManageMenuDialogProps) {
+  const { t } = useLanguage();
   const { toast } = useToast();
 
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -395,8 +402,8 @@ export function ManageMenuDialog({
       console.error("Menu scanning failed:", error);
       toast({
         variant: 'destructive',
-        title: 'Scan Failed',
-        description: 'Could not read the menu from the image. Please try again.',
+        title: t('Scan Failed'),
+        description: t('Could not read the menu from the image. Please try again.'),
       });
     } finally {
       setIsScanning(false);
@@ -433,12 +440,12 @@ export function ManageMenuDialog({
 
   const handleAddCategory = () => {
     if (!newCategoryName) {
-      toast({ variant: 'destructive', title: 'Category name is required' });
+      toast({ variant: 'destructive', title: t('Category name is required') });
       return;
     }
     const categorySlug = slugify(newCategoryName);
     if (menu.some(cat => cat.id === categorySlug)) {
-      toast({ variant: 'destructive', title: 'Category already exists' });
+      toast({ variant: 'destructive', title: t('Category already exists') });
       return;
     }
     const newMenu = [...menu, { id: categorySlug, name: newCategoryName, items: [], subcategories: [] }];
@@ -455,7 +462,7 @@ export function ManageMenuDialog({
 
   const handleAddSubCategory = () => {
     if (!newSubCategoryName || !parentCategoryForSub) {
-      toast({ variant: 'destructive', title: 'Both fields are required' });
+      toast({ variant: 'destructive', title: t('Both fields are required') });
       return;
     }
 
@@ -481,7 +488,7 @@ export function ManageMenuDialog({
 
   const handleAddItem = () => {
     if (!newItemName || !newItemPrice || !selectedCategoryForItem) {
-      toast({ variant: 'destructive', title: 'All fields are required' });
+      toast({ variant: 'destructive', title: t('All fields are required') });
       return;
     }
 
@@ -518,7 +525,7 @@ export function ManageMenuDialog({
 
     if (subCatName) {
       const subCatIndex = newMenu[categoryIndex].subcategories?.findIndex(sc => sc.name === subCatName);
-      if (subCatIndex !== -1 && newMenu[categoryIndex].subcategories) {
+      if (subCatIndex !== undefined && subCatIndex !== -1 && newMenu[categoryIndex].subcategories) {
         newMenu[categoryIndex].subcategories![subCatIndex].items.push(newItem);
       }
     } else {
@@ -565,7 +572,7 @@ export function ManageMenuDialog({
 
     setMenu(newMenu);
     setEditingItem(null);
-    toast({ title: "Item Updated" });
+    toast({ title: t("Item Updated") });
   };
 
   const handleSaveIngredients = (itemName: string, newIngredients: IngredientItem[]) => {
@@ -610,7 +617,7 @@ export function ManageMenuDialog({
     });
 
     setMenu(newMenu);
-    toast({ title: `Item "${itemName}" removed.` });
+    toast({ title: t("Item Removed") });
   };
 
   const handleRemoveCategory = (categoryName: string, subCategoryName?: string) => {
@@ -623,10 +630,10 @@ export function ManageMenuDialog({
         }
         return cat;
       });
-      toast({ title: `Sub-category "${subCategoryName}" removed.` });
+      toast({ title: t("Sub-category Removed") });
     } else {
       newMenu = menu.filter(cat => cat.name !== categoryName);
-      toast({ title: `Category "${categoryName}" removed.` });
+      toast({ title: t("Category Removed") });
     }
     setMenu(newMenu);
   };
@@ -701,9 +708,9 @@ export function ManageMenuDialog({
           <DialogHeader>
             <div className="flex justify-between items-center">
               <div>
-                <DialogTitle>Manage Menu</DialogTitle>
+                <DialogTitle>{t('Manage Menu')}</DialogTitle>
                 <DialogDescription>
-                  Add, edit, and organize your menu categories, items, and ingredients.
+                  {t('Add, edit, and organize your menu categories, items, and ingredients.')}
                 </DialogDescription>
               </div>
             </div>
@@ -714,11 +721,11 @@ export function ManageMenuDialog({
 
               {/* Scan from Image */}
               <AccordionItem value="scan-menu">
-                <AccordionTrigger className="text-lg font-semibold">Scan Menu from Image</AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold">{t('Scan Menu from Image')}</AccordionTrigger>
                 <AccordionContent className="p-4 bg-muted/50 rounded-b-md">
                   <div className="flex items-center gap-4 mb-4">
                     <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                      <Upload className="mr-2 h-4 w-4" /> Upload Image
+                      <Upload className="mr-2 h-4 w-4" /> {t('Upload Image')}
                     </Button>
                     <Input
                       ref={fileInputRef}
@@ -729,20 +736,20 @@ export function ManageMenuDialog({
                       onChange={handleFileChange}
                     />
                     <Button variant="outline" onClick={() => setIsCameraViewOpen(true)}>
-                      <Camera className="mr-2 h-4 w-4" /> Open Camera
+                      <Camera className="mr-2 h-4 w-4" /> {t('Open Camera')}
                     </Button>
                   </div>
                   <div className="flex justify-center items-center min-h-[12rem] w-full border-2 border-dashed rounded-lg bg-background relative p-4">
                     {isScanning ? (
                       <div className="flex flex-col items-center gap-2 text-primary">
                         <Loader2 className="h-10 w-10 animate-spin" />
-                        <p className="font-semibold">AI is scanning your menu...</p>
+                        <p className="font-semibold">{t('AI is scanning your menu...')}</p>
                       </div>
                     ) : scannedMenu && scannedMenu.menu.length > 0 ? (
                       <div className="w-full space-y-4">
                         <div className="text-center">
-                          <h3 className="text-lg font-semibold flex items-center justify-center gap-2"><Wand2 /> Scanned Results</h3>
-                          <p className="text-sm text-muted-foreground">Review the scanned categories and add them to your menu.</p>
+                          <h3 className="text-lg font-semibold flex items-center justify-center gap-2"><Wand2 /> {t('Scanned Results')}</h3>
+                          <p className="text-sm text-muted-foreground">{t('Review the scanned categories and add them to your menu.')}</p>
                         </div>
                         <div className="space-y-2 max-h-64 overflow-y-auto">
                           {scannedMenu.menu.map(category => (
@@ -755,7 +762,7 @@ export function ManageMenuDialog({
                                 {category.items.map(item => (
                                   <li key={item.name} className="flex justify-between">
                                     <span>{item.name}</span>
-                                    <span className="font-mono">Rs.{item.price}</span>
+                                    <span className="font-mono">{currency}{item.price}</span>
                                   </li>
                                 ))}
                               </ul>
@@ -763,7 +770,7 @@ export function ManageMenuDialog({
                           ))}
                         </div>
                         <div className="flex justify-end">
-                          <Button variant="ghost" onClick={() => setScannedMenu(null)}><X className="mr-2 h-4 w-4" /> Discard All</Button>
+                          <Button variant="ghost" onClick={() => setScannedMenu(null)}><X className="mr-2 h-4 w-4" /> {t('Discard All')}</Button>
                         </div>
                       </div>
                     ) : (
@@ -775,34 +782,34 @@ export function ManageMenuDialog({
 
               {/* Add Category */}
               <AccordionItem value="add-category">
-                <AccordionTrigger className="text-lg font-semibold">Add New Category</AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold">{t('Add New Category')}</AccordionTrigger>
                 <AccordionContent className="p-4 bg-muted/50 rounded-b-md space-y-6">
                   {/* Add Main Category */}
                   <div className="space-y-2 p-4 border rounded-lg">
-                    <h4 className="font-semibold text-base">1. Add a Main Category</h4>
+                    <h4 className="font-semibold text-base">1. {t('Add a Main Category')}</h4>
                     <div className="flex items-end gap-2">
                       <div className="flex-grow space-y-1">
-                        <Label htmlFor="new-main-category">New Main Category Name</Label>
+                        <Label htmlFor="new-main-category">{t('New Main Category Name')}</Label>
                         <Input
                           id="new-main-category"
                           value={newCategoryName}
                           onChange={e => setNewCategoryName(e.target.value)}
-                          placeholder="e.g., Appetizers, Desserts"
+                          placeholder={t('e.g., Appetizers, Desserts')}
                         />
                       </div>
-                      <Button onClick={handleAddCategory}><PlusCircle className="mr-2 h-4 w-4" />Add</Button>
+                      <Button onClick={handleAddCategory}><PlusCircle className="mr-2 h-4 w-4" />{t('Add')}</Button>
                     </div>
                   </div>
 
                   {/* Add Sub Category */}
                   <div className="space-y-2 p-4 border rounded-lg">
-                    <h4 className="font-semibold text-base">2. Add a Sub-category (Optional)</h4>
+                    <h4 className="font-semibold text-base">2. {t('Add a Sub-Category')} ({t('Optional')})</h4>
                     <div className="flex items-end gap-2">
                       <div className="flex-grow space-y-1">
-                        <Label htmlFor="parent-category-select">Parent Main Category</Label>
+                        <Label htmlFor="parent-category-select">{t('Select Parent Category')}</Label>
                         <Select value={parentCategoryForSub} onValueChange={setParentCategoryForSub}>
                           <SelectTrigger id="parent-category-select">
-                            <SelectValue placeholder="Select a parent..." />
+                            <SelectValue placeholder={t('Select a parent...')} />
                           </SelectTrigger>
                           <SelectContent>
                             {menu.map(cat => (
@@ -812,17 +819,17 @@ export function ManageMenuDialog({
                         </Select>
                       </div>
                       <div className="flex-grow space-y-1">
-                        <Label htmlFor="new-sub-category">New Sub-category Name</Label>
+                        <Label htmlFor="new-sub-category">{t('New Sub-Category Name')}</Label>
                         <Input
                           id="new-sub-category"
                           value={newSubCategoryName}
                           onChange={e => setNewSubCategoryName(e.target.value)}
-                          placeholder="e.g., Hot Drinks, Cold Drinks"
+                          placeholder={t('e.g., Hot Drinks, Cold Drinks')}
                           disabled={!parentCategoryForSub}
                         />
                       </div>
                       <Button onClick={handleAddSubCategory} disabled={!parentCategoryForSub || !newSubCategoryName}>
-                        <PlusCircle className="mr-2 h-4 w-4" />Add
+                        <PlusCircle className="mr-2 h-4 w-4" />{t('Add')}
                       </Button>
                     </div>
                   </div>
@@ -831,13 +838,13 @@ export function ManageMenuDialog({
 
               {/* Add Item */}
               <AccordionItem value="add-item">
-                <AccordionTrigger className="text-lg font-semibold">Add New Menu Item</AccordionTrigger>
+                <AccordionTrigger className="text-lg font-semibold">{t('Add New Menu Item')}</AccordionTrigger>
                 <AccordionContent className="p-4 bg-muted/50 rounded-b-md space-y-4">
                   <div className="space-y-1">
-                    <Label htmlFor="select-category">Category / Sub-category</Label>
+                    <Label htmlFor="select-category">{t('Select Category / Sub-Category')}</Label>
                     <Select value={selectedCategoryForItem} onValueChange={setSelectedCategoryForItem}>
                       <SelectTrigger id="select-category">
-                        <SelectValue placeholder="Select where to add item" />
+                        <SelectValue placeholder={t('Select where to add item')} />
                       </SelectTrigger>
                       <SelectContent>
                         {menu.map(cat => (
@@ -855,22 +862,22 @@ export function ManageMenuDialog({
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <div className="space-y-1">
-                      <Label htmlFor="new-item-name">Item Name</Label>
+                      <Label htmlFor="new-item-name">{t('Item Name')}</Label>
                       <Input
                         id="new-item-name"
                         value={newItemName}
                         onChange={e => setNewItemName(e.target.value)}
-                        placeholder="e.g., Chocolate Lava Cake"
+                        placeholder={t('e.g., Chocolate Lava Cake')}
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label htmlFor="new-item-price">Price</Label>
+                      <Label htmlFor="new-item-price">{t('Price')}</Label>
                       <Input
                         id="new-item-price"
                         type="number"
                         value={newItemPrice}
                         onChange={e => setNewItemPrice(e.target.value)}
-                        placeholder="e.g., 250"
+                        placeholder={t('e.g., 250')}
                       />
                     </div>
                     <div className="space-y-2 pb-1">
@@ -882,12 +889,12 @@ export function ManageMenuDialog({
                           onCheckedChange={(checked) => setNewItemIsVeg(checked === true)}
                         />
                         <Label htmlFor="new-item-veg" className="text-sm font-medium leading-none flex items-center gap-2">
-                          Veg
+                          {t('Veg/Non-Veg')}
                           <div className={cn("h-2 w-2 rounded-full", newItemIsVeg ? "bg-green-600" : "bg-red-600")} />
                         </Label>
                       </div>
                     </div>
-                    <Button onClick={handleAddItem} className="mb-[2px]"><PlusCircle className="mr-2 h-4 w-4" />Add</Button>
+                    <Button onClick={handleAddItem} className="mb-[2px]"><PlusCircle className="mr-2 h-4 w-4" />{t('Add')}</Button>
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -895,11 +902,11 @@ export function ManageMenuDialog({
               {/* Edit/Remove Menu */}
               <AccordionItem value="edit-menu">
                 <AccordionTrigger className="text-lg font-semibold">
-                  Edit Menu &amp; Ingredients
+                  {t('Edit Menu & Ingredients')}
                 </AccordionTrigger>
                 <AccordionContent className="p-4 bg-muted/50 rounded-b-md space-y-4">
                   <Input
-                    placeholder="Search for a category or item to edit..."
+                    placeholder={t('Search for a category or item to edit...')}
                     value={editMenuSearch}
                     onChange={(e) => setEditMenuSearch(e.target.value)}
                     className="mb-4"
@@ -917,21 +924,21 @@ export function ManageMenuDialog({
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogTitle>{t('Are you absolutely sure?')}</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This will permanently delete the entire category "{cat.name}" and all items within it. This action cannot be undone.
+                                  {t('This will permanently delete the entire category')} "{cat.name}" {t('and all items within it.')} {t('This action cannot be undone.')}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleRemoveCategory(cat.name)}>Delete Category</AlertDialogAction>
+                                <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleRemoveCategory(cat.name)}>{t('Delete Category')}</AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
                         </div>
                         {cat.items.length > 0 && (
                           <ul className="mt-1 space-y-1">
-                            {cat.items.map(item => <ItemRow key={item.name} item={item} setEditingItem={() => setEditingItem({ categoryName: cat.name, item })} setEditingIngredients={setEditingIngredients} handleRemoveItem={handleRemoveItem} />)}
+                            {cat.items.map(item => <ItemRow key={item.name} item={item} setEditingItem={() => setEditingItem({ categoryName: cat.name, item })} setEditingIngredients={setEditingIngredients} handleRemoveItem={handleRemoveItem} currency={currency} />)}
                           </ul>
                         )}
                         {cat.subcategories?.map(sub => (
@@ -946,27 +953,27 @@ export function ManageMenuDialog({
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogTitle>{t('Are you absolutely sure?')}</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This will permanently delete the sub-category "{sub.name}" and all its items. This action cannot be undone.
+                                      {t('This will permanently delete the sub-category')} "{sub.name}" {t('and all its items.')} {t('This action cannot be undone.')}
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleRemoveCategory(cat.name, sub.name)}>Delete Sub-category</AlertDialogAction>
+                                    <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleRemoveCategory(cat.name, sub.name)}>{t('Delete Sub-category')}</AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
                               </AlertDialog>
                             </div>
                             <ul className="mt-1 space-y-1">
-                              {sub.items.map(item => <ItemRow key={item.name} item={item} setEditingItem={() => setEditingItem({ categoryName: cat.name, item })} setEditingIngredients={setEditingIngredients} handleRemoveItem={handleRemoveItem} />)}
+                              {sub.items.map(item => <ItemRow key={item.name} item={item} setEditingItem={() => setEditingItem({ categoryName: cat.name, item })} setEditingIngredients={setEditingIngredients} handleRemoveItem={handleRemoveItem} currency={currency} />)}
                             </ul>
                           </div>
                         ))}
                       </div>
                     ))}
                     {filteredMenuForEditing.length === 0 && (
-                      <p className="text-center text-muted-foreground">No items match your search.</p>
+                      <p className="text-center text-muted-foreground">{t('No items match your search.')}</p>
                     )}
                   </div>
                 </AccordionContent>
@@ -976,7 +983,7 @@ export function ManageMenuDialog({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Close
+              {t('Close')}
             </Button>
           </DialogFooter>
 
@@ -988,6 +995,7 @@ export function ManageMenuDialog({
           onOpenChange={(open) => !open && setEditingItem(null)}
           item={editingItem.item}
           onSave={handleEditItem}
+          currency={currency}
         />
       )}
       {editingIngredients && (
@@ -1002,32 +1010,32 @@ export function ManageMenuDialog({
       <Dialog open={isCameraViewOpen} onOpenChange={setIsCameraViewOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Scan with Camera</DialogTitle>
+            <DialogTitle>{t('Scan with Camera')}</DialogTitle>
             <DialogDescription>
-              Position the menu clearly within the frame and capture.
+              {t('Position the menu clearly within the frame and capture.')}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <video ref={videoRef} className="w-full aspect-video rounded-md bg-black" autoPlay muted playsInline />
             {hasCameraPermission === false && (
               <Alert variant="destructive" className="mt-4">
-                <AlertTitle>Camera Access Denied</AlertTitle>
+                <AlertTitle>{t('Camera Access Denied')}</AlertTitle>
                 <AlertDescription>
-                  Please enable camera permissions in your browser settings to use this feature.
+                  {t('Please enable camera permissions in your browser settings to use this feature.')}
                 </AlertDescription>
               </Alert>
             )}
             {hasCameraPermission === null && (
               <div className="flex items-center justify-center pt-8">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <p className="ml-2">Requesting camera access...</p>
+                <p className="ml-2">{t('Requesting camera access...')}</p>
               </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCameraViewOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsCameraViewOpen(false)}>{t('Cancel')}</Button>
             <Button onClick={handleCapture} disabled={!hasCameraPermission}>
-              <Camera className="mr-2 h-4 w-4" /> Capture
+              <Camera className="mr-2 h-4 w-4" /> {t('Capture')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1036,15 +1044,17 @@ export function ManageMenuDialog({
   );
 }
 
-function ItemRow({ item, setEditingItem, setEditingIngredients, handleRemoveItem }: {
+function ItemRow({ item, setEditingItem, setEditingIngredients, handleRemoveItem, currency = 'Rs.' }: {
   item: MenuItem;
   setEditingItem: () => void;
   setEditingIngredients: (item: MenuItem) => void;
   handleRemoveItem: (name: string) => void;
+  currency?: string;
 }) {
+  const { t } = useLanguage();
   return (
     <li className="flex justify-between items-center p-1 rounded-md">
-      <span>{item.name} - <span className="font-mono">Rs.{item.price}</span></span>
+      <span>{item.name} - <span className="font-mono">{currency}{item.price}</span></span>
       <div className="flex items-center">
         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={setEditingItem}>
           <Edit className="h-4 w-4" />
@@ -1060,14 +1070,14 @@ function ItemRow({ item, setEditingItem, setEditingIngredients, handleRemoveItem
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogTitle>{t('Are you absolutely sure?')}</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete the item "{item.name}". This action cannot be undone.
+                {t('This will permanently delete the item')} "{item.name}". {t('This action cannot be undone.')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleRemoveItem(item.name)}>Delete</AlertDialogAction>
+              <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleRemoveItem(item.name)}>{t('Delete')}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

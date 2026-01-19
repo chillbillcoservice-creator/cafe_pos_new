@@ -10,6 +10,7 @@ import type { Order } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useLanguage } from "@/contexts/language-context";
 
 interface KitchenOrdersProps {
   orders: Order[];
@@ -21,6 +22,7 @@ type OrderStatus = 'In Preparation' | 'Completed';
 const statusColumns: OrderStatus[] = ['In Preparation', 'Completed'];
 
 export default function KitchenOrders({ orders, setOrders }: KitchenOrdersProps) {
+  const { t } = useLanguage();
 
   const moveOrder = (orderId: string, toStatus: OrderStatus) => {
     setOrders(orders.map(order => order.id === orderId ? { ...order, status: toStatus } : order));
@@ -33,13 +35,13 @@ export default function KitchenOrders({ orders, setOrders }: KitchenOrdersProps)
   const getOrderTitle = (order: Order) => {
     switch (order.orderType) {
       case 'Dine-In':
-        return `Table: ${order.tableId}`;
+        return `${t('Table')}: ${order.tableId}`;
       case 'Take-Away':
-        return 'Take Away';
+        return t('Take Away');
       case 'Home-Delivery':
-        return order.customerDetails?.name || 'Home Delivery';
+        return order.customerDetails?.name || t('Home Delivery');
       default:
-        return 'Unknown Order';
+        return t('Unknown Order');
     }
   }
 
@@ -48,11 +50,11 @@ export default function KitchenOrders({ orders, setOrders }: KitchenOrdersProps)
       case 'In Preparation':
         return (
           <Button size="sm" onClick={() => moveOrder(order.id, 'Completed')} className="bg-green-500 hover:bg-green-600">
-            Complete <Check className="ml-2 h-4 w-4" />
+            {t('Complete')} <Check className="ml-2 h-4 w-4" />
           </Button>
         );
       case 'Completed':
-        return <p className="text-sm text-muted-foreground">Order finished.</p>;
+        return <p className="text-sm text-muted-foreground">{t('Order finished.')}</p>;
       default:
         return null;
     }
@@ -72,7 +74,7 @@ export default function KitchenOrders({ orders, setOrders }: KitchenOrdersProps)
         {statusColumns.map((status) => (
           <Card key={status} className="flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-xl font-bold">{status}</CardTitle>
+              <CardTitle className="text-xl font-bold">{t(status)}</CardTitle>
               {status === 'In Preparation' && orders.some(o => o.status === 'In Preparation') && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -81,20 +83,20 @@ export default function KitchenOrders({ orders, setOrders }: KitchenOrdersProps)
                       variant="outline"
                       className="bg-green-100 text-green-700 hover:bg-green-200 border-green-200"
                     >
-                      Complete All <Check className="ml-2 h-4 w-4" />
+                      {t('Complete All')} <Check className="ml-2 h-4 w-4" />
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Complete All Orders?</AlertDialogTitle>
+                      <AlertDialogTitle>{t('Complete All Orders?')}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will mark all currently preparing orders as completed. This action cannot be undone.
+                        {t('This will mark all currently preparing orders as completed. This action cannot be undone.')}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
                       <AlertDialogAction onClick={() => moveAllOrders('In Preparation', 'Completed')}>
-                        Yes, Complete All
+                        {t('Yes, Complete All')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -106,7 +108,7 @@ export default function KitchenOrders({ orders, setOrders }: KitchenOrdersProps)
                 {orders.filter(order => order.status === status).length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground pt-16">
                     <ClipboardList className="w-16 h-16 text-gray-300" />
-                    <p className="mt-4 text-sm font-medium">No {status.toLowerCase()} orders.</p>
+                    <p className="mt-4 text-sm font-medium">{t('No orders')}</p>
                   </div>
                 ) : (
                   orders.filter(order => order.status === status).map(order => (
@@ -115,8 +117,8 @@ export default function KitchenOrders({ orders, setOrders }: KitchenOrdersProps)
                     })}>
                       <CardHeader className="p-4">
                         <div className='flex justify-between items-center'>
-                          <CardTitle className="text-lg">Order {getOrderIdForDisplay(order.id)}</CardTitle>
-                          <Badge variant={order.orderType === 'Dine-In' ? 'default' : 'secondary'}>{order.orderType}</Badge>
+                          <CardTitle className="text-lg">{t('Order')} {getOrderIdForDisplay(order.id)}</CardTitle>
+                          <Badge variant={order.orderType === 'Dine-In' ? 'default' : 'secondary'}>{t(order.orderType)}</Badge>
                         </div>
                         <CardDescription>{getOrderTitle(order)}</CardDescription>
                       </CardHeader>

@@ -7,6 +7,7 @@ import SetupWizard from "./setup-wizard";
 import { useState, useEffect } from "react";
 import { useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { LanguageProvider } from "@/contexts/language-context";
 
 interface AppEntryProps {
   initialMenu: MenuCategory[];
@@ -24,7 +25,7 @@ interface AppEntryProps {
 }
 
 
-const useLocalStorageState = <T,>(key: string, defaultValue: T): [T, (value: T) => void] => {
+const useLocalStorageState = <T,>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
   const [state, setState] = useState<T>(defaultValue);
 
   useEffect(() => {
@@ -43,15 +44,18 @@ const useLocalStorageState = <T,>(key: string, defaultValue: T): [T, (value: T) 
     }
   }, [key]);
 
-  const setWithLocalStorage = (newValue: T) => {
-    setState(newValue);
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem(key, JSON.stringify(newValue));
-      } catch (error) {
-        console.error(`Error saving "${key}" to localStorage`, error);
+  const setWithLocalStorage: React.Dispatch<React.SetStateAction<T>> = (value) => {
+    setState((prevState) => {
+      const newValue = value instanceof Function ? (value as (prev: T) => T)(prevState) : value;
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(key, JSON.stringify(newValue));
+        } catch (error) {
+          console.error(`Error saving "${key}" to localStorage`, error);
+        }
       }
-    }
+      return newValue;
+    });
   };
 
   return [state, setWithLocalStorage];
@@ -90,6 +94,7 @@ export default function AppEntry({
 
   // New state for currency and setup status
   const [currency, setCurrency] = useLocalStorageState<string>('currency', 'Rs.');
+  const [language, setLanguage] = useLocalStorageState<string>('language', 'en');
   const [isSetupComplete, setIsSetupComplete] = useLocalStorageState<boolean>('isSetupComplete', false);
   const [venueDetails, setVenueDetails] = useLocalStorageState<VenueDetails | null>('venueDetails', null);
   const [ownerDetails, setOwnerDetails] = useLocalStorageState<OwnerDetails | null>('ownerDetails', null);
@@ -107,6 +112,9 @@ export default function AppEntry({
             const syncedCurrency = data.currency === '₹' ? 'Rs.' : data.currency;
             setCurrency(syncedCurrency);
           }
+          if (data.language) {
+            setLanguage(data.language);
+          }
         }
       } catch (e) {
         console.error("Error fetching settings from Firestore:", e);
@@ -123,6 +131,7 @@ export default function AppEntry({
     setVenueDetails(data.venue);
     setOwnerDetails(data.owner);
     setCurrency(data.currency);
+    setLanguage(data.language);
 
     // Create initial employees
     if (data.employees && data.employees.length > 0) {
@@ -157,44 +166,71 @@ export default function AppEntry({
     if (typeof window !== 'undefined') {
       localStorage.setItem('setupComplete', 'true');
     }
+
+    // Immediately sync to Firestore to prevent race conditions where MainLayout hasn't synced yet
+    // but a reload happens or AppEntry remounts.
+    if (db) {
+      import('firebase/firestore').then(({ doc, setDoc }) => {
+        setDoc(doc(db, "settings", "venue"), {
+          venueName: data.venue.name,
+          currency: data.currency,
+          language: data.language,
+          address: data.venue.address || '',
+          contactNumber: data.venue.contactNumber || '',
+          email: data.venue.email || '',
+          tagline: data.venue.tagline || '',
+          ownerName: data.owner.name || '',
+          ownerContact: data.owner.contactNumber || '',
+          ownerEmail: data.owner.email || '',
+        }, { merge: true }).catch(err => console.error("Immediate Firestore Sync Error:", err));
+      });
+    }
   };
 
   if (!isSetupComplete) {
-    return <SetupWizard onComplete={handleSetupComplete} initialData={{ currency, venue: venueDetails || { name: venueName || '', address: '', contactNumber: '', email: '', tagline: '' } }} />;
+    return (
+      <LanguageProvider key={language} initialLanguage={language}>
+        <SetupWizard onComplete={handleSetupComplete} initialData={{ currency, language, venue: venueDetails || { name: venueName || '', address: '', contactNumber: '', email: '', tagline: '' } }} />
+      </LanguageProvider>
+    );
   }
 
   return (
-    <MainLayout
-      initialMenu={menu}
-      initialInventory={inventory}
-      initialEmployees={employees}
-      initialBills={bills}
-      initialExpenses={expenses}
-      initialCustomers={customers}
-      initialVendors={vendors}
-      initialPendingBills={pendingBills}
-      initialVenueName={venueName}
-      initialKotPreference={kotPreference}
-      initialAttendance={attendance}
-      initialAdvances={advances}
-      initialEventBookings={eventBookings}
-      initialCurrency={currency}
-      setMenu={setMenu}
-      setInventory={setInventory}
-      setEmployees={setEmployees}
-      setBills={setBills}
-      setExpenses={setExpenses}
-      setCustomers={setCustomers}
-      setVendors={setVendors}
-      setPendingBills={setPendingBills}
-      setAttendance={setAttendance}
-      setAdvances={setAdvances}
-      setVenueName={setVenueName}
-      setKotPreference={setKotPreference}
-      setEventBookings={setEventBookings}
-      setCurrency={setCurrency} // Pass setter
-      venueDetails={venueDetails}
-      ownerDetails={ownerDetails}
-    />
+    <LanguageProvider key={language} initialLanguage={language}>
+      <MainLayout
+        initialMenu={menu}
+        initialInventory={inventory}
+        initialEmployees={employees}
+        initialBills={bills}
+        initialExpenses={expenses}
+        initialCustomers={customers}
+        initialVendors={vendors}
+        initialPendingBills={pendingBills}
+        initialVenueName={venueName}
+        initialKotPreference={kotPreference}
+        initialAttendance={attendance}
+        initialAdvances={advances}
+        initialEventBookings={eventBookings}
+        initialCurrency={currency || 'Rs.'}
+        setMenu={setMenu}
+        setInventory={setInventory}
+        setEmployees={setEmployees}
+        setBills={setBills}
+        setExpenses={setExpenses}
+        setCustomers={setCustomers}
+        setVendors={setVendors}
+        setPendingBills={setPendingBills}
+        setAttendance={setAttendance}
+        setAdvances={setAdvances}
+        setVenueName={setVenueName}
+        setKotPreference={setKotPreference}
+        setEventBookings={setEventBookings}
+        setCurrency={setCurrency} // Pass setter
+        setLanguage={setLanguage}
+        initialLanguage={language}
+        venueDetails={venueDetails}
+        ownerDetails={ownerDetails}
+      />
+    </LanguageProvider>
   );
 }

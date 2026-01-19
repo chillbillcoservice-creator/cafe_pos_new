@@ -24,6 +24,7 @@ const GenerateReceiptInputSchema = z.object({
   discount: z.number().describe('Discount percentage (0-20).'),
   subtotal: z.number().describe('The subtotal of the items before the discount.'),
   total: z.number().describe('The total cost of the order after applying the discount.'),
+  currency: z.string().optional().default('Rs.').describe('The currency symbol.'),
 });
 
 export type GenerateReceiptInput = z.infer<typeof GenerateReceiptInputSchema>;
@@ -55,18 +56,18 @@ The receipt should have the following structure:
 - Ensure all prices are right-aligned for a clean look.
 - The summary section should be clearly separated with lines.
 - **CRITICAL**: If the discount percentage is 0, you MUST NOT show the "Discount" line in the summary.
-- **CRITICAL**: Always use "Rs." as the currency symbol. Do NOT use '$' or '₹'.
+- **CRITICAL**: Always use "{{{currency}}}" as the currency symbol.
 
 **Order Data:**
 - **Venue Name**: {{{venueName}}}
 - **Items**: I will provide an array of item objects. For each item, you must calculate the line total (item.price * item.quantity).
 - **Discount Percentage**: {{discount}}%
-- **Subtotal**: Rs.{{subtotal}}
-- **Total**: Rs.{{total}}
+- **Subtotal**: {{{currency}}}{{subtotal}}
+- **Total**: {{{currency}}}{{total}}
 
 **Here are the items for the current order:**
 {{#each items}}
-- {{quantity}} x {{name}} (at Rs.{{price}} each)
+- {{quantity}} x {{name}} (at {{{currency}}}{{price}} each)
 {{/each}}
 
 

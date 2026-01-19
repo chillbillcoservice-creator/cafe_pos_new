@@ -297,6 +297,7 @@ export const GenerateReportInputSchema = z.object({
   inventory: z.array(z.any()).describe('A list of all inventory items.'),
   customerSummary: z.array(z.any()).describe('A summary of customer data including total visits and spending.'),
   recipientEmail: z.string().describe('A comma-separated string of email addresses to send the report to.'),
+  currency: z.string().describe('The currency symbol to use for monetary values.'),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 
@@ -325,6 +326,7 @@ export interface OwnerDetails {
   contactNumber: string;
   email: string;
   address?: string; // Added to support setup wizard inputs
+  language?: string;
 }
 
 export interface SetupData {
@@ -334,4 +336,5 @@ export interface SetupData {
   employees: Partial<Employee>[];
   vendors?: Partial<Vendor>[];
   currency: string;
+  language: string;
 }

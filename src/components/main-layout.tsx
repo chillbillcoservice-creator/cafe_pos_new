@@ -2,6 +2,7 @@
 'use client';
 
 import * as React from 'react';
+import { useLanguage } from '@/contexts/language-context';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Utensils, LayoutGrid, Soup, Users, Shield, Receipt, Package, PanelTop, PanelLeft, Users2, Menu as MenuIcon, HelpCircle, BellDot, Bookmark } from 'lucide-react';
@@ -52,23 +53,25 @@ interface MainLayoutProps {
   initialAdvances: Advance[];
   initialEventBookings: EventBooking[];
   setMenu: (menu: MenuCategory[]) => void;
-  setInventory: (inventory: InventoryItem[]) => void;
-  setEmployees: (employees: Employee[]) => void;
-  setBills: (bills: Bill[]) => void;
-  setExpenses: (expenses: Expense[]) => void;
-  setCustomers: (customers: Customer[]) => void;
-  setVendors: (vendors: Vendor[]) => void;
-  setPendingBills: (pendingBills: PendingBill[]) => void;
-  setAttendance: (attendance: Attendance[]) => void;
-  setAdvances: (advances: Advance[]) => void;
+  setInventory: React.Dispatch<React.SetStateAction<InventoryItem[]>>;
+  setEmployees: React.Dispatch<React.SetStateAction<Employee[]>>;
+  setBills: React.Dispatch<React.SetStateAction<Bill[]>>;
+  setExpenses: React.Dispatch<React.SetStateAction<Expense[]>>;
+  setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
+  setVendors: React.Dispatch<React.SetStateAction<Vendor[]>>;
+  setPendingBills: React.Dispatch<React.SetStateAction<PendingBill[]>>;
+  setAttendance: React.Dispatch<React.SetStateAction<Attendance[]>>;
+  setAdvances: React.Dispatch<React.SetStateAction<Advance[]>>;
   setVenueName: (name: string) => void;
   setKotPreference: (preference: KOTPreference) => void;
 
-  setEventBookings: (bookings: EventBooking[]) => void;
+  setEventBookings: React.Dispatch<React.SetStateAction<EventBooking[]>>;
   initialCurrency: string;
   setCurrency: (currency: string) => void;
   venueDetails?: VenueDetails | null;
   ownerDetails?: OwnerDetails | null;
+  initialLanguage: string;
+  setLanguage: (lang: string) => void;
 }
 
 export default function MainLayout({
@@ -101,8 +104,11 @@ export default function MainLayout({
   initialCurrency,
   setCurrency,
   venueDetails,
-  ownerDetails
+  ownerDetails,
+  initialLanguage,
+  setLanguage
 }: MainLayoutProps) {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const db = useFirestore(); // Still needed for QR code orders listener
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
@@ -140,8 +146,8 @@ export default function MainLayout({
       });
       if (newOrders.length > customerOrders.length) {
         toast({
-          title: "New Customer Order!",
-          description: `A new order has been placed for table ${newOrders[newOrders.length - 1].tableId}.`,
+          title: t("New Customer Order!"),
+          description: t("A new order has been placed for table") + ` ${newOrders[newOrders.length - 1].tableId}.`,
         });
         setIsIncomingOrderDialogOpen(true);
       }
@@ -525,25 +531,42 @@ export default function MainLayout({
   const handleSetupComplete = (data: any) => {
     try {
       localStorage.setItem('setupComplete', 'true');
-      setVenueName(data.venueName);
-      setEmployees(data.employees);
+      setVenueName(data.venue.name);
+      setEmployees(prev => [...(data.employees || [])]); // Append or replace? Setup usually replaces or initializes. Let's merge if needed, but for "Re-run" let's be careful. Actually, SetupWizard returns employees.
+      // Better to check if we should overwrite. For now, let's update state.
+      // But critical: Currency
+      if (data.currency) {
+        setCurrency(data.currency);
+      }
+
       setVendors(data.vendors);
-      localStorage.setItem('venueName', data.venueName);
+      localStorage.setItem('venueName', data.venue.name);
+
+      // Persist to Firestore immediately
+      if (db) {
+        // data.venue has { name, address, ... }
+        import('firebase/firestore').then(({ doc, setDoc }) => {
+          setDoc(doc(db, "settings", "venue"), {
+            venueName: data.venue.name,
+            currency: data.currency,
+            address: data.venue.address || '',
+            contactNumber: data.venue.contactNumber || '',
+            email: data.venue.email || '',
+            tagline: data.venue.tagline || '',
+            ownerName: data.owner ? data.owner.name : '',
+            ownerContact: data.owner ? data.owner.contactNumber : '',
+            ownerEmail: data.owner ? data.owner.email : '',
+          }, { merge: true }).catch(err => console.error("Immediate Firestore Sync Error (MainLayout):", err));
+        });
+      }
+
     } catch (e) {
       console.error("Could not access localStorage", e);
     }
     setShowSetupWizard(false);
   }
 
-  const navItems = [
-    { value: 'pos', label: 'Main', icon: Utensils },
-    { value: 'tables', label: 'Tables', icon: LayoutGrid },
-    { value: 'kitchen', label: 'Kitchen & Inventory', icon: Soup },
-    { value: 'expenses', label: 'Expenses', icon: Receipt },
-    { value: 'customers', label: 'Customers & Bookings', icon: Users2 },
-    { value: 'staff', label: 'Staff', icon: Users },
-    { value: 'admin', label: 'Admin', icon: Shield },
-  ];
+
 
 
   if (isCheckingSetup) {
@@ -554,6 +577,15 @@ export default function MainLayout({
     return <SetupWizard onComplete={handleSetupComplete} />;
   }
 
+  const navItems = [
+    { value: 'pos', label: t('Main'), icon: Utensils },
+    { value: 'tables', label: t('Tables'), icon: LayoutGrid },
+    { value: 'kitchen', label: t('Kitchen & Inventory'), icon: Soup },
+    { value: 'expenses', label: t('Expenses'), icon: Receipt },
+    { value: 'customers', label: t('Customers & Bookings'), icon: Users2 },
+    { value: 'staff', label: t('Staff'), icon: Users },
+    { value: 'admin', label: t('Admin'), icon: Shield },
+  ];
   const renderNav = (isSheet = false) => (
     <TabsList className={cn(
       "m-2 p-0 h-auto bg-transparent",
@@ -600,7 +632,7 @@ export default function MainLayout({
               onClick={() => setIsIncomingOrderDialogOpen(true)}
             >
               <BellDot className="mr-2 h-5 w-5" />
-              Incoming Orders
+              {t('Incoming Orders')}
               <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-bold">
                 {customerOrders.length}
               </span>
@@ -615,7 +647,7 @@ export default function MainLayout({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Change Nav Position</p>
+                <p>{t('Change Nav Position')}</p>
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -625,7 +657,7 @@ export default function MainLayout({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Help</p>
+                <p>{t('Help')}</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -716,6 +748,7 @@ export default function MainLayout({
                 onOrderCreated={onOrderCreated}
                 customers={initialCustomers}
                 setCustomers={setCustomers}
+                currency={initialCurrency}
               />
             </TabsContent>
             <TabsContent value="kitchen" className="m-0 p-0 h-full">
@@ -742,6 +775,7 @@ export default function MainLayout({
                 pendingBills={initialPendingBills}
                 eventBookings={initialEventBookings}
                 setEventBookings={setEventBookings}
+                currency={initialCurrency}
               />
             </TabsContent>
             <TabsContent value="expenses" className="m-0 p-0 h-full">
@@ -766,6 +800,7 @@ export default function MainLayout({
                 setAdvances={setAdvances}
                 attendance={initialAttendance}
                 setAttendance={setAttendance}
+                currency={initialCurrency}
               />
             </TabsContent>
             <TabsContent value="admin" className="m-0 p-0 h-full">

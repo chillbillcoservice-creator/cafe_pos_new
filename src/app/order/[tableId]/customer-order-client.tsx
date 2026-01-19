@@ -46,7 +46,7 @@ export function CustomerOrderClient({ tableId }: CustomerOrderClientProps) {
   const menuQuery = useMemoFirebase(() => db ? collection(db, 'menu') : null, [db]);
   const { data: menuData, isLoading: isMenuLoading } = useCollection<MenuCategory>(menuQuery);
   const [venueName, setVenueName] = useState("Your Restaurant");
-  const [currency, setCurrency] = useState("₹");
+  const [currency, setCurrency] = useState("Rs.");
   const [isVenueLoading, setIsVenueLoading] = useState(true);
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export function CustomerOrderClient({ tableId }: CustomerOrderClientProps) {
         if (docRef.exists()) {
           const data = docRef.data();
           setVenueName(data.venueName || "Your Venue");
-          setCurrency(data.currency || "₹");
+          setCurrency(data.currency || "Rs.");
         }
       } catch (e) { console.error(e); }
       finally { setIsVenueLoading(false); }
@@ -175,32 +175,44 @@ export function CustomerOrderClient({ tableId }: CustomerOrderClientProps) {
             <p className="text-xs font-semibold text-orange-600 mt-0.5 uppercase tracking-wide">Table {tableId}</p>
           </div>
 
-          <div className="relative w-40 shrink-0">
+          <div className="relative flex-1 max-w-[280px] shrink-0">
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search dishes..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-zinc-100/80 backdrop-blur-sm border border-zinc-200 rounded-full text-xs font-medium text-zinc-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500/50 transition-all placeholder:text-zinc-400 shadow-sm"
+              className="w-full pl-11 pr-4 py-3 bg-zinc-100/90 backdrop-blur-sm border border-zinc-200 rounded-2xl text-sm font-semibold text-zinc-900 focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500/50 transition-all placeholder:text-zinc-400 shadow-sm"
             />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500 pointer-events-none z-10" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-orange-500 pointer-events-none z-10" />
           </div>
         </div>
 
         {/* --- Sticky Categories --- */}
         <div className="mt-2 w-full overflow-x-auto no-scrollbar pl-5 pr-2 pb-2">
           <div className="flex gap-3">
-            {processedMenu.map((cat) => {
+            {processedMenu.map((cat, index) => {
               const isActive = activeCategory === cat.category;
+              // Define vibrant color schemes for categories
+              const colorSchemes = [
+                { active: "from-orange-500 to-rose-500", inactive: "bg-orange-50 text-orange-700 border-orange-200", shadow: "shadow-orange-200" },
+                { active: "from-blue-500 to-indigo-500", inactive: "bg-blue-50 text-blue-700 border-blue-200", shadow: "shadow-blue-200" },
+                { active: "from-emerald-500 to-teal-500", inactive: "bg-emerald-50 text-emerald-700 border-emerald-200", shadow: "shadow-emerald-200" },
+                { active: "from-purple-500 to-fuchsia-500", inactive: "bg-purple-50 text-purple-700 border-purple-200", shadow: "shadow-purple-200" },
+                { active: "from-amber-500 to-yellow-500", inactive: "bg-amber-100 text-amber-800 border-amber-300", shadow: "shadow-amber-200" },
+                { active: "from-pink-500 to-rose-500", inactive: "bg-pink-50 text-pink-700 border-pink-200", shadow: "shadow-pink-200" },
+                { active: "from-cyan-500 to-blue-500", inactive: "bg-cyan-50 text-cyan-700 border-cyan-200", shadow: "shadow-cyan-200" },
+              ];
+              const scheme = colorSchemes[index % colorSchemes.length];
+
               return (
                 <button
                   key={cat.category}
                   onClick={() => scrollToCategory(cat.category)}
                   className={cn(
-                    "px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 snap-center shadow-sm",
+                    "px-5 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 snap-center shadow-sm border",
                     isActive
-                      ? "bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-orange-200 shadow-md scale-105"
-                      : "bg-white text-zinc-600 border border-zinc-100"
+                      ? cn("bg-gradient-to-r text-white scale-105 shadow-md", scheme.active, scheme.shadow)
+                      : cn(scheme.inactive)
                   )}
                 >
                   {cat.category}

@@ -17,11 +17,12 @@ const SendEmailReceiptInputSchema = z.object({
   receiptContent: z.string().describe('The text content of the receipt.'),
   totalAmount: z.number().describe('The total amount of the bill.'),
   subject: z.string().optional().describe('The subject of the email.'),
+  currency: z.string().optional().default('Rs.').describe('The currency symbol.'),
 });
 
 export type SendEmailReceiptInput = z.infer<typeof SendEmailReceiptInputSchema>;
 
-export async function sendEmailReceipt(input: SendEmailReceiptInput): Promise<{success: boolean; message: string}> {
+export async function sendEmailReceipt(input: SendEmailReceiptInput): Promise<{ success: boolean; message: string }> {
   return sendEmailReceiptFlow(input);
 }
 
@@ -63,7 +64,8 @@ const sendEmailReceiptFlow = ai.defineFlow(
 
       const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
-      const subject = input.subject || `Your receipt for Rs.${input.totalAmount.toFixed(2)}`;
+      const currency = input.currency || 'Rs.';
+      const subject = input.subject || `Your receipt for ${currency}${input.totalAmount.toFixed(2)}`;
       const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
       const messageParts = [
         `From: Up & Above Assistant <${GMAIL_USER}>`,

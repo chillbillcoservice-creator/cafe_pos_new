@@ -10,8 +10,9 @@ export const groupItemsForKOT = (items: OrderItem[], kotPreference: KOTPreferenc
             return items.length > 0 ? [{ title: 'KOT', items }] : [];
 
         case 'separate': {
-            const kitchenItems = items.filter(item => item.category !== 'Beverages');
-            const barItems = items.filter(item => item.category === 'Beverages');
+            const isBeverage = (cat: string) => cat.trim().toLowerCase() === 'beverages';
+            const kitchenItems = items.filter(item => !isBeverage(item.category || ''));
+            const barItems = items.filter(item => isBeverage(item.category || ''));
             const groups = [];
             if (kitchenItems.length > 0) groups.push({ title: 'Kitchen KOT', items: kitchenItems });
             if (barItems.length > 0) groups.push({ title: 'Bar KOT', items: barItems });
@@ -19,27 +20,20 @@ export const groupItemsForKOT = (items: OrderItem[], kotPreference: KOTPreferenc
         }
 
         case 'category': {
-            // Items that are NOT in the special separated categories
             const generalItems = items.filter(item => !kotCategories.includes(item.category || ''));
             const groups = [];
 
             if (generalItems.length > 0) {
-                // Further split general items into kitchen and bar if needed, or keep them as "General KOT"
-                // Based on previous logic, we might want to split them by Kitchen/Bar if they aren't in a special category
-                // But for now, let's keep the existing logic which seemed to split them too.
-
-                const kitchenItems = generalItems.filter(item => item.category !== 'Beverages');
-                const barItems = generalItems.filter(item => item.category === 'Beverages');
-
-                if (kitchenItems.length > 0) groups.push({ title: 'Kitchen KOT', items: kitchenItems });
-                if (barItems.length > 0) groups.push({ title: 'Bar KOT', items: barItems });
+                groups.push({ title: 'KOT', items: generalItems });
             }
 
             // Items that ARE in the special categories
             kotCategories.forEach(category => {
                 const categoryItems = items.filter(item => item.category === category);
                 if (categoryItems.length > 0) {
-                    groups.push({ title: `${category} KOT`, items: categoryItems });
+                    const isBeverage = (cat: string) => cat.trim().toLowerCase() === 'beverages';
+                    const title = isBeverage(category) ? 'Bar KOT' : `${category} KOT`;
+                    groups.push({ title, items: categoryItems });
                 }
             });
             return groups;

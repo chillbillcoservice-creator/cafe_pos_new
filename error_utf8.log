@@ -1,0 +1,109 @@
+﻿
+> nextn@0.1.0 dev
+> next dev
+
+node.exe : node:inte
+rnal/modules/cjs/loa
+der:1423
+At line:1 char:1
++ & "C:\Program File
+s\nodejs/node.exe" 
+"C:\Program Files\no
+dejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo  
+            : 
+NotSpeci    fied: 
+(node:inter    
+nal/modules/cjs/l   
+ oader:1423:String  
+  ) [], RemoteExcep 
+   tion
+    + 
+FullyQualifiedE    
+rrorId : NativeCo   
+ mmandError
+ 
+  throw err;
+  ^
+
+Error: Cannot find 
+module 'next/dist/co
+mpiled/commander'
+Require stack:
+- C:\Users\admin\Des
+ktop\Downloads\UPDAT
+ED_POS-20260118T1342
+10Z-1-001\UPDATED_PO
+S\cafe_pos_new-main\
+node_modules\next\di
+st\bin\next
+    at 
+Module.<anonymous> (
+node:internal/module
+s/cjs/loader:1420:15
+)
+    at C:\Users\admi
+n\Desktop\Downloads\
+UPDATED_POS-20260118
+T134210Z-1-001\UPDAT
+ED_POS\cafe_pos_new-
+main\node_modules\ne
+xt\dist\server\requi
+re-hook.js:55:36
+    at 
+defaultResolveImpl (
+node:internal/module
+s/cjs/loader:1058:19
+)
+    at resolveForCJS
+WithHooks (node:inte
+rnal/modules/cjs/loa
+der:1063:22)
+    at Module._load 
+(node:internal/modul
+es/cjs/loader:1226:3
+7)
+    at TracingChanne
+l.traceSync (node:di
+agnostics_channel:32
+2:14)
+    at 
+wrapModuleLoad (node
+:internal/modules/cj
+s/loader:244:24)
+    at 
+Module.<anonymous> (
+node:internal/module
+s/cjs/loader:1503:12
+)
+    at mod.require (
+C:\Users\admin\Deskt
+op\Downloads\UPDATED
+_POS-20260118T134210
+Z-1-001\UPDATED_POS\
+cafe_pos_new-main\no
+de_modules\next\dist
+\server\require-hook
+.js:65:28)
+    at require (node
+:internal/modules/he
+lpers:152:16) {
+  code: 
+'MODULE_NOT_FOUND',
+  requireStack: [
+    'C:\\Users\\admi
+n\\Desktop\\Download
+s\\UPDATED_POS-20260
+118T134210Z-1-001\\U
+PDATED_POS\\cafe_pos
+_new-main\\node_modu
+les\\next\\dist\\bin
+\\next'
+  ]
+}
+
+Node.js v24.8.0

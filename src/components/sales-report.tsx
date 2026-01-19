@@ -10,6 +10,7 @@ interface SalesReportProps {
   bills: Bill[];
   reportType: 'daily' | 'monthly' | 'yearly';
   setReportType: (type: 'daily' | 'monthly' | 'yearly') => void;
+  currency: string;
 }
 
 type ReportType = 'daily' | 'monthly' | 'yearly';
@@ -72,7 +73,7 @@ const processData = (bills: Bill[], type: ReportType) => {
   return { data, reportTitle, totalRevenue, totalOrders, averageOrderValue };
 };
 
-export default function SalesReport({ bills, reportType, setReportType }: SalesReportProps) {
+export default function SalesReport({ bills, reportType, setReportType, currency = 'Rs.' }: SalesReportProps) {
 
   const { data, reportTitle, totalRevenue, totalOrders, averageOrderValue } = useMemo(() => processData(bills, reportType), [bills, reportType]);
 
@@ -94,7 +95,7 @@ export default function SalesReport({ bills, reportType, setReportType }: SalesR
           <div className="grid grid-cols-3 gap-4 mb-8 text-center">
             <div>
               <p className="text-sm text-muted-foreground">Total Revenue</p>
-              <p className="text-2xl font-bold">Rs.{totalRevenue.toFixed(2)}</p>
+              <p className="text-2xl font-bold">{currency}{totalRevenue.toFixed(2)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Orders</p>
@@ -102,7 +103,7 @@ export default function SalesReport({ bills, reportType, setReportType }: SalesR
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Average Order Value</p>
-              <p className="text-2xl font-bold">Rs.{averageOrderValue.toFixed(2)}</p>
+              <p className="text-2xl font-bold">{currency}{averageOrderValue.toFixed(2)}</p>
             </div>
           </div>
           <div className="h-80 w-full">
@@ -112,7 +113,7 @@ export default function SalesReport({ bills, reportType, setReportType }: SalesR
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip formatter={(value: number) => `Rs.${value.toFixed(2)}`} />
+                  <Tooltip formatter={(value: number) => `${currency}${value.toFixed(2)}`} />
                   <Legend />
                   <Bar dataKey="revenue" fill="hsl(var(--primary))" />
                 </BarChart>

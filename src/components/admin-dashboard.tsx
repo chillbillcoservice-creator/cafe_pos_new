@@ -3,6 +3,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
+import { useLanguage } from '@/contexts/language-context';
 import { BarChart, Book, Download, TrendingUp, Settings, Package, User, ShoppingCart, History, Mail, Receipt, Edit, Trash2, Building, Users, CreditCard, PlusCircle, Eye, Repeat, Printer } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,7 @@ export default function AdminDashboard({
   currency = 'Rs.',
   setCurrency,
 }: AdminDashboardProps) {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const db = useFirestore();
   const [isReportLoading, setIsReportLoading] = useState(false);
@@ -111,9 +113,9 @@ export default function AdminDashboard({
     // Summary Section
     csvContent += "Summary\n";
     csvContent += "Metric,Value\n";
-    csvContent += `Total Revenue (Today),$Rs.${totalRevenue.toFixed(2)}\n`;
+    csvContent += `Total Revenue (Today),${currency}${totalRevenue.toFixed(2)}\n`;
     csvContent += `Total Orders (Today),${totalOrders}\n`;
-    csvContent += `Average Order Value (Today),$Rs.${averageOrderValue.toFixed(2)}\n`;
+    csvContent += `Average Order Value (Today),${currency}${averageOrderValue.toFixed(2)}\n`;
     csvContent += "\n";
 
     // Expenses
@@ -151,6 +153,7 @@ export default function AdminDashboard({
     const input = {
       reportType,
       recipientEmail: 'upandabove.bir@gmail.com',
+      currency: currency,
     };
 
     try {
@@ -291,7 +294,7 @@ export default function AdminDashboard({
               <TableRow key={bill.id}>
                 <TableCell>{bill.id}</TableCell>
                 <TableCell>{format(new Date(bill.timestamp), 'p')}</TableCell>
-                <TableCell className="text-right font-mono">Rs.{bill.total.toFixed(2)}</TableCell>
+                <TableCell className="text-right font-mono">{currency}{bill.total.toFixed(2)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -338,8 +341,8 @@ export default function AdminDashboard({
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 cursor-pointer" onClick={showRevenueDetails}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-800 dark:text-green-200">Total Revenue (Today)</CardTitle>
-            <span className="text-green-600 font-bold">Rs.</span>
+            <CardTitle className="text-sm font-medium text-green-800 dark:text-green-200">{t('Total Revenue (Today)')}</CardTitle>
+            <span className="text-green-600 font-bold">{currency}</span>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-900 dark:text-green-100">{totalRevenue.toFixed(2)}</div>
@@ -347,7 +350,7 @@ export default function AdminDashboard({
         </Card>
         <Card className="bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 cursor-pointer" onClick={showRevenueDetails}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800 dark:text-blue-200">Total Orders (Today)</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-800 dark:text-blue-200">{t('Total Orders (Today)')}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -356,16 +359,16 @@ export default function AdminDashboard({
         </Card>
         <Card className="bg-orange-100 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 cursor-pointer" onClick={showRevenueDetails}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-orange-800 dark:text-orange-200">Average Order Value</CardTitle>
+            <CardTitle className="text-sm font-medium text-orange-800 dark:text-orange-200">{t('Avg. Order Value')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-orange-900 dark:text-orange-100">Rs.{averageOrderValue.toFixed(2)}</div>
+            <div className="text-3xl font-bold text-orange-900 dark:text-orange-100">{currency}{averageOrderValue.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card className="bg-purple-100 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 cursor-pointer" onClick={showStaffDetails}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-800 dark:text-purple-200">Active Staff</CardTitle>
+            <CardTitle className="text-sm font-medium text-purple-800 dark:text-purple-200">{t('Active Staff')}</CardTitle>
             <User className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
@@ -379,29 +382,29 @@ export default function AdminDashboard({
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardContent className="p-2">
-              <SalesReport bills={billHistory} reportType={reportType} setReportType={setReportType} />
+              <SalesReport bills={billHistory} reportType={reportType} setReportType={setReportType} currency={currency} />
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Action Center</CardTitle>
-              <CardDescription>Quick access to management tasks.</CardDescription>
+              <CardTitle>{t('Action Center')}</CardTitle>
+              <CardDescription>{t('Quick access to management tasks.')}</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" size="lg" className="h-20 text-base flex-col gap-2">
                     <History className="h-6 w-6" />
-                    <span>View Bills</span>
+                    <span>{t('View Bills')}</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-5xl">
                   <DialogHeader>
-                    <DialogTitle>Bill History</DialogTitle>
-                    <DialogDescription>A log of all completed transactions.</DialogDescription>
+                    <DialogTitle>{t('Bill History')}</DialogTitle>
+                    <DialogDescription>{t('A log of all completed transactions.')}</DialogDescription>
                   </DialogHeader>
                   <div className="pt-4">
-                    <BillHistory bills={billHistory} onClearAll={handleClearAllBills} />
+                    <BillHistory bills={billHistory} onClearAll={handleClearAllBills} currency={currency} />
                   </div>
                 </DialogContent>
               </Dialog>
@@ -409,30 +412,30 @@ export default function AdminDashboard({
                 <DialogTrigger asChild>
                   <Button variant="outline" size="lg" className="h-20 text-base flex-col gap-2">
                     <Users className="h-6 w-6" />
-                    <span>Manage Staff</span>
+                    <span>{t('Manage Staff')}</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl">
                   <DialogHeader>
-                    <DialogTitle>Staff Management</DialogTitle>
-                    <DialogDescription>Add, edit, or remove staff members.</DialogDescription>
+                    <DialogTitle>{t('Staff Management')}</DialogTitle>
+                    <DialogDescription>{t('Add, edit, or remove staff members.')}</DialogDescription>
                   </DialogHeader>
                   <div className="mt-4">
                     <Button onClick={() => { setEditingEmployee(null); setIsAddEmployeeDialogOpen(true); }}>
-                      <PlusCircle className="mr-2 h-4 w-4" /> ADD NEW EMPLOYEE
+                      <PlusCircle className="mr-2 h-4 w-4" /> {t('ADD NEW EMPLOYEE')}
                     </Button>
                   </div>
                   <div className="max-h-[60vh] overflow-y-auto mt-4">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>ID</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Mobile</TableHead>
-                          <TableHead>Govt ID</TableHead>
-                          <TableHead>Salary (Rs.)</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                          <TableHead>{t('ID')}</TableHead>
+                          <TableHead>{t('Name')}</TableHead>
+                          <TableHead>{t('Role')}</TableHead>
+                          <TableHead>{t('Mobile')}</TableHead>
+                          <TableHead>{t('Govt ID')}</TableHead>
+                          <TableHead>{t('Salary')} ({currency})</TableHead>
+                          <TableHead className="text-right">{t('Actions')}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -464,9 +467,9 @@ export default function AdminDashboard({
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogTitle>{t('Are you sure?')}</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      This action cannot be undone. This will permanently delete {employee.name}'s record.
+                                      {t('This action cannot be undone. This will permanently delete')} {employee.name}{t("'s record.")}
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
@@ -487,19 +490,19 @@ export default function AdminDashboard({
                 <DialogTrigger asChild>
                   <Button variant="outline" size="lg" className="h-20 text-base flex-col gap-2">
                     <Package className="h-6 w-6" />
-                    <span>Inventory</span>
+                    <span>{t('Inventory')}</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-5xl">
                   <DialogHeader>
-                    <DialogTitle>Inventory Management</DialogTitle>
+                    <DialogTitle>{t('Inventory Management')}</DialogTitle>
                   </DialogHeader>
                   <InventoryManagement inventory={inventory} menu={menu} setMenu={() => { }} setInventory={setInventory} />
                 </DialogContent>
               </Dialog>
               <Button variant="outline" size="lg" className="h-20 text-base flex-col gap-2" onClick={handleExportCSV}>
                 <Download className="h-6 w-6" />
-                <span>Export Data</span>
+                <span>{t('Export Data')}</span>
               </Button>
             </CardContent>
           </Card>
@@ -509,12 +512,12 @@ export default function AdminDashboard({
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Settings</CardTitle>
+              <CardTitle>{t('Settings')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Separator />
               <div className="space-y-4 pt-4">
-                <CardTitle className="text-base flex items-center gap-2"><Printer /> KOT Preferences</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2"><Printer /> {t('KOT Preferences')}</CardTitle>
                 <RadioGroup
                   value={kotPreference.type}
                   onValueChange={(type) => setKotPreference({ ...kotPreference, type: type as any, categories: type !== 'category' ? [] : kotPreference.categories })}
@@ -524,26 +527,26 @@ export default function AdminDashboard({
 
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="single" id="kot-single" />
-                    <Label htmlFor="kot-single">Single Combined KOT</Label>
+                    <Label htmlFor="kot-single">{t('Single Combined KOT')}</Label>
                   </div>
 
 
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="separate" id="kot-separate" />
-                    <Label htmlFor="kot-separate">Separate Kitchen & Bar KOTs</Label>
+                    <Label htmlFor="kot-separate">{t('Separate Kitchen & Bar KOTs')}</Label>
                   </div>
 
 
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="category" id="kot-category" />
-                    <Label htmlFor="kot-category">Separate KOT for Specific Categories</Label>
+                    <Label htmlFor="kot-category">{t('Separate KOT for Specific Categories')}</Label>
                   </div>
                 </RadioGroup>
 
                 {kotPreference.type === 'category' && (
                   <div className="pl-6 pt-2 space-y-2 max-h-48 overflow-y-auto">
-                    <Label className="font-semibold">Select categories for separate KOTs:</Label>
-                    {menuCategories.filter(cat => cat !== 'Beverages').map(category => (
+                    <Label className="font-semibold">{t('Select categories for separate KOTs:')}</Label>
+                    {menuCategories.map(category => (
                       <div key={category} className="flex items-center space-x-2">
                         <Checkbox
                           id={`cat-${category}`}
@@ -558,13 +561,13 @@ export default function AdminDashboard({
               </div>
               <Separator />
               <div className="space-y-4 pt-4">
-                <CardTitle className="text-base flex items-center gap-2"><Mail /> Email Reports</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2"><Mail /> {t('Email Reports')}</CardTitle>
                 <div className='flex flex-wrap gap-2'>
                   <Button variant="secondary" onClick={() => handleSendReport('daily')} disabled={isReportLoading}>
-                    Send Daily
+                    {t('Send Daily')}
                   </Button>
                   <Button variant="secondary" onClick={() => handleSendReport('monthly')} disabled={isReportLoading}>
-                    Send Monthly
+                    {t('Send Monthly')}
                   </Button>
                 </div>
                 <div className="space-y-2">
@@ -572,21 +575,21 @@ export default function AdminDashboard({
 
                   <div className="flex items-center space-x-2">
                     <Switch id="auto-daily" checked={autoSendDaily} onCheckedChange={setAutoSendDaily} />
-                    <Label htmlFor="auto-daily">Auto-send Daily Report</Label>
+                    <Label htmlFor="auto-daily">{t('Auto-send Daily Report')}</Label>
                   </div>
 
 
                   <div className="flex items-center space-x-2">
                     <Switch id="auto-monthly" checked={autoSendMonthly} onCheckedChange={setAutoSendMonthly} />
-                    <Label htmlFor="auto-monthly">Auto-send Monthly Report</Label>
+                    <Label htmlFor="auto-monthly">{t('Auto-send Monthly Report')}</Label>
                   </div>
                 </div>
               </div>
               <Separator />
               <div className="space-y-4 pt-4">
-                <CardTitle className="text-base flex items-center gap-2"><CreditCard /> Financial Settings</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2"><CreditCard /> {t('Financial Settings')}</CardTitle>
                 <div className="space-y-2">
-                  <Label htmlFor="customer-limit">Customer Credit Limit (Rs.)</Label>
+                  <Label htmlFor="customer-limit">{t('Customer Credit Limit')} ({currency})</Label>
                   <Input
                     id="customer-limit"
                     type="number"
@@ -596,7 +599,7 @@ export default function AdminDashboard({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="vendor-limit">Vendor Credit Limit (Rs.)</Label>
+                  <Label htmlFor="vendor-limit">{t('Vendor Credit Limit')} ({currency})</Label>
                   <Input
                     id="vendor-limit"
                     type="number"
@@ -608,9 +611,9 @@ export default function AdminDashboard({
               </div>
               <Separator />
               <div className="space-y-4 pt-4">
-                <CardTitle className="text-base flex items-center gap-2"><Settings /> System Settings</CardTitle>
+                <CardTitle className="text-base flex items-center gap-2"><Settings /> {t('System Settings')}</CardTitle>
                 <Button variant="outline" className="w-full" onClick={onRerunSetup}>
-                  <Repeat className="mr-2 h-4 w-4" /> Rerun Setup Wizard
+                  <Repeat className="mr-2 h-4 w-4" /> {t('Rerun Setup Wizard')}
                 </Button>
               </div>
             </CardContent>
@@ -650,7 +653,7 @@ export default function AdminDashboard({
             {summaryDetailContent}
           </div>
           <DialogFooter>
-            <Button onClick={() => setIsSummaryDetailOpen(false)}>Close</Button>
+            <Button onClick={() => setIsSummaryDetailOpen(false)}>{t('Close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -660,7 +663,7 @@ export default function AdminDashboard({
 
 
 function EmployeeDialog({ open, onOpenChange, employee, onSave }: { open: boolean; onOpenChange: (open: boolean) => void; employee: Employee | null; onSave: (data: Partial<Employee>) => void; }) {
-
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
   const [customRole, setCustomRole] = useState('');
@@ -720,47 +723,47 @@ function EmployeeDialog({ open, onOpenChange, employee, onSave }: { open: boolea
           }}
         >
           <DialogHeader>
-            <DialogTitle>{employee ? "Edit Employee" : "Add New Employee"}</DialogTitle>
+            <DialogTitle>{employee ? t("Edit Employee") : t("Add New Employee")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Employee Name</Label>
-              <Input id="name" placeholder="e.g., John Doe" value={name} onChange={(e) => setName(e.target.value)} required />
+              <Label htmlFor="name">{t('Employee Name')}</Label>
+              <Input id="name" placeholder={t('e.g., John Doe')} value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">{t('Role')}</Label>
               <Select value={role} onValueChange={setRole} required>
                 <SelectTrigger id="role">
-                  <SelectValue placeholder="Select a role" />
+                  <SelectValue placeholder={t('Select a role')} />
                 </SelectTrigger>
                 <SelectContent>
                   {defaultRoles.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                  <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="Other">{t('Other')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {role === 'Other' && (
               <div className="space-y-2">
-                <Label htmlFor="custom-role">Custom Role</Label>
-                <Input id="custom-role" placeholder="e.g., Dishwasher" value={customRole} onChange={(e) => setCustomRole(e.target.value)} required />
+                <Label htmlFor="custom-role">{t('Custom Role')}</Label>
+                <Input id="custom-role" placeholder={t('e.g., Dishwasher')} value={customRole} onChange={(e) => setCustomRole(e.target.value)} required />
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="salary">Salary</Label>
+              <Label htmlFor="salary">{t('Salary')}</Label>
               <Input id="salary" type="number" placeholder="e.g., 30000" value={salary} onChange={(e) => setSalary(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="mobile">Mobile No.</Label>
-              <Input id="mobile" placeholder="e.g., 9876543210" value={mobile} onChange={(e) => setMobile(e.target.value)} />
+              <Label htmlFor="mobile">{t('Mobile No.')}</Label>
+              <Input id="mobile" placeholder={t('e.g., 9876543210')} value={mobile} onChange={(e) => setMobile(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="govtId">Govt. ID</Label>
+              <Label htmlFor="govtId">{t('Govt. ID')}</Label>
               <Input id="govtId" placeholder="e.g., Aadhar/PAN" value={govtId} onChange={(e) => setGovtId(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit">{employee ? "Save Changes" : "Add New Employee"}</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
+            <Button type="submit">{employee ? t("Save Changes") : t("Add New Employee")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

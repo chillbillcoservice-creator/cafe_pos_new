@@ -17,9 +17,10 @@ interface CustomerOrderClientProps {
   menuData: { category: string; items: MenuItem[] }[];
   tableId: string;
   venueName: string;
+  currency?: string;
 }
 
-export function CustomerOrderClient({ menuData, tableId, venueName }: CustomerOrderClientProps) {
+export function CustomerOrderClient({ menuData, tableId, venueName, currency = 'Rs.' }: CustomerOrderClientProps) {
   const [cart, setCart] = useState<OrderItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -41,16 +42,16 @@ export function CustomerOrderClient({ menuData, tableId, venueName }: CustomerOr
       return [...prevCart, { ...itemWithCategory, quantity: 1 }];
     });
     toast({
-        title: `${item.name} added to cart!`,
+      title: `${item.name} added to cart!`,
     })
   };
-  
+
   const updateQuantity = (itemName: string, quantity: number) => {
     setCart(prevCart => {
-        if (quantity <= 0) {
-            return prevCart.filter(item => item.name !== itemName);
-        }
-        return prevCart.map(item => item.name === itemName ? {...item, quantity} : item);
+      if (quantity <= 0) {
+        return prevCart.filter(item => item.name !== itemName);
+      }
+      return prevCart.map(item => item.name === itemName ? { ...item, quantity } : item);
     })
   }
 
@@ -87,7 +88,7 @@ export function CustomerOrderClient({ menuData, tableId, venueName }: CustomerOr
         description: 'Could not place your order. Please try again or ask for help.',
       });
     } finally {
-        setIsPlacingOrder(false);
+      setIsPlacingOrder(false);
     }
   };
 
@@ -109,7 +110,7 @@ export function CustomerOrderClient({ menuData, tableId, venueName }: CustomerOr
                       <div key={item.name} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                         <div>
                           <p className="font-medium">{item.name}</p>
-                          <p className="text-sm text-muted-foreground">Rs.{item.price.toFixed(2)}</p>
+                          <p className="text-sm text-muted-foreground">{currency}{item.price.toFixed(2)}</p>
                         </div>
                         <Button size="sm" onClick={() => addToCart(item)}>
                           <Plus className="mr-2 h-4 w-4" /> Add
@@ -126,66 +127,66 @@ export function CustomerOrderClient({ menuData, tableId, venueName }: CustomerOr
 
       {totalItems > 0 && (
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t shadow-lg">
-            <div className="container mx-auto max-w-2xl">
-                <Button className="w-full h-14 text-lg" onClick={() => setIsCartOpen(true)}>
-                    <ShoppingCart className="mr-4 h-6 w-6" />
-                    View Your Order ({totalItems} items)
-                    <span className="ml-auto font-mono">₹{subtotal.toFixed(2)}</span>
-                </Button>
-            </div>
+          <div className="container mx-auto max-w-2xl">
+            <Button className="w-full h-14 text-lg" onClick={() => setIsCartOpen(true)}>
+              <ShoppingCart className="mr-4 h-6 w-6" />
+              View Your Order ({totalItems} items)
+              <span className="ml-auto font-mono">{currency}{subtotal.toFixed(2)}</span>
+            </Button>
+          </div>
         </div>
       )}
 
       <Dialog open={isCartOpen} onOpenChange={setIsCartOpen}>
-          <DialogContent className="max-w-md">
-              <DialogHeader>
-                  <DialogTitle>Your Order</DialogTitle>
-                  <DialogDescription>
-                      Review your items before placing the order.
-                  </DialogDescription>
-              </DialogHeader>
-              <div className="max-h-[60vh] overflow-y-auto my-4 -mx-6 px-6">
-                  {cart.length > 0 ? (
-                      <div className="space-y-4">
-                          {cart.map(item => (
-                              <div key={item.name} className="flex items-center">
-                                  <div className="flex-grow">
-                                      <p className="font-medium">{item.name}</p>
-                                      <p className="text-sm text-muted-foreground">Rs.{item.price.toFixed(2)}</p>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                      <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.name, item.quantity - 1)}>
-                                          <Minus className="h-4 w-4" />
-                                      </Button>
-                                      <span className="w-8 text-center font-bold">{item.quantity}</span>
-                                      <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.name, item.quantity + 1)}>
-                                          <Plus className="h-4 w-4" />
-                                      </Button>
-                                  </div>
-                              </div>
-                          ))}
-                      </div>
-                  ) : (
-                      <p className="text-muted-foreground text-center py-8">Your cart is empty.</p>
-                  )}
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Your Order</DialogTitle>
+            <DialogDescription>
+              Review your items before placing the order.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto my-4 -mx-6 px-6">
+            {cart.length > 0 ? (
+              <div className="space-y-4">
+                {cart.map(item => (
+                  <div key={item.name} className="flex items-center">
+                    <div className="flex-grow">
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">{currency}{item.price.toFixed(2)}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.name, item.quantity - 1)}>
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-8 text-center font-bold">{item.quantity}</span>
+                      <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.name, item.quantity + 1)}>
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              {cart.length > 0 && (
-                <>
-                <Separator />
-                <div className="flex justify-between items-center text-lg font-bold py-2">
-                    <span>Subtotal:</span>
-                    <span>Rs.{subtotal.toFixed(2)}</span>
-                </div>
-                </>
-              )}
-              <DialogFooter>
-                  <Button variant="outline" onClick={() => setIsCartOpen(false)}>Continue Browsing</Button>
-                  <Button onClick={handlePlaceOrder} disabled={cart.length === 0 || isPlacingOrder}>
-                      {isPlacingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Place Order
-                  </Button>
-              </DialogFooter>
-          </DialogContent>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">Your cart is empty.</p>
+            )}
+          </div>
+          {cart.length > 0 && (
+            <>
+              <Separator />
+              <div className="flex justify-between items-center text-lg font-bold py-2">
+                <span>Subtotal:</span>
+                <span>{currency}{subtotal.toFixed(2)}</span>
+              </div>
+            </>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCartOpen(false)}>Continue Browsing</Button>
+            <Button onClick={handlePlaceOrder} disabled={cart.length === 0 || isPlacingOrder}>
+              {isPlacingOrder && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Place Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   );
