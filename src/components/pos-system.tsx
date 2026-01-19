@@ -693,6 +693,7 @@ export default function PosSystem({
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [easyMode, setEasyMode] = useState(false);
+  const [lastKotItems, setLastKotItems] = useState<OrderItem[]>([]);
   const [isEasyModeInitialized, setIsEasyModeInitialized] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [receiptPreview, setReceiptPreview] = useState('');
@@ -1149,7 +1150,7 @@ export default function PosSystem({
     let newItems: OrderItem[] = [];
 
     if (isReprint) {
-      itemsToProcess = [...orderItems];
+      itemsToProcess = lastKotItems.length > 0 ? [...lastKotItems] : [...orderItems];
     } else {
       newItems = getNewItems(orderItems, activeOrder?.items || []);
       itemsToProcess = newItems;
@@ -1261,6 +1262,10 @@ export default function PosSystem({
         if (inventoryUpdated) {
           setInventory(newInventory);
         }
+      }
+
+      if (!isReprint) {
+        setLastKotItems(itemsToProcess);
       }
 
       const kotGroupsToPrint = groupItemsForKOT(itemsToProcess);
