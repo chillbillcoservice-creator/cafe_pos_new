@@ -11,8 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Edit, Search, Bookmark, Trash2, Eye, Printer, Phone, Mail, User, CalendarDays, ShoppingBag, ArrowUpDown, ChevronDown, ChevronUp, CalendarIcon, Briefcase } from 'lucide-react';
-import type { Bill, Customer, PendingBill, Table as TableType, EventBooking } from '@/lib/types';
+import { PlusCircle, Edit, Search, Bookmark, Trash2, Eye, Printer, Phone, Mail, User, CalendarDays, ShoppingBag, ArrowUpDown, ChevronDown, ChevronUp, CalendarIcon, Briefcase, HandCoins } from 'lucide-react';
+import { PendingBillsCard } from './pending-bills-card';
+import type { Bill, Customer, PendingBill, PendingBillTransaction, Table as TableType, EventBooking } from '@/lib/types';
 import { format } from 'date-fns';
 import { Textarea } from './ui/textarea';
 import { ScrollArea } from './ui/scroll-area';
@@ -27,6 +28,8 @@ interface CustomerManagementProps {
   customers: Customer[];
   setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
   pendingBills: PendingBill[];
+  setPendingBills: (bills: PendingBill[]) => void;
+  customerCreditLimit: number;
   eventBookings: EventBooking[];
   setEventBookings: React.Dispatch<React.SetStateAction<EventBooking[]>>;
   currency: string;
@@ -274,7 +277,7 @@ function CustomerHistoryDialog({
 }
 
 
-export default function CustomerManagement({ billHistory, tables, customers: initialCustomers, setCustomers, pendingBills, eventBookings, setEventBookings, currency = 'Rs.' }: CustomerManagementProps) {
+export default function CustomerManagement({ billHistory, tables, customers: initialCustomers, setCustomers, pendingBills, setPendingBills, customerCreditLimit, eventBookings, setEventBookings, currency = 'Rs.' }: CustomerManagementProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
 
@@ -524,6 +527,79 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
     return sortDirection === 'asc' ? <ChevronUp className="ml-2 h-4 w-4" /> : <ChevronDown className="ml-2 h-4 w-4" />;
   };
 
+  const savePendingBills = async (newPendingBills: PendingBill[]) => {
+    try {
+      setPendingBills(newPendingBills);
+    } catch (error) {
+      console.error(error);
+      toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save pending bills.' });
+    }
+  }
+
+  const handleAddPendingTransaction = async (type: 'customer' | 'vendor', name: string, amount: number, mobile?: string, dueDate?: Date) => {
+    const totalPending = pendingBills
+      .filter(b => b.type === type)
+      .reduce((total, bill) => total + bill.transactions.reduce((sum, t) => sum + t.amount, 0), 0);
+
+    const limit = customerCreditLimit;
+
+    if (totalPending + amount > limit) {
+      toast({ variant: 'destructive', title: 'Credit Limit Exceeded', description: `Adding this amount would exceed the customer credit limit of ${currency}${limit.toLocaleString()}.` });
+      return;
+    }
+
+    const newTransaction: PendingBillTransaction = {
+      id: new Date().toISOString(),
+      amount,
+      date: new Date(),
+    };
+
+    const existingBillIndex = pendingBills.findIndex(b => b.name.toLowerCase() === name.toLowerCase() && b.type === type);
+
+    let newPendingBills;
+
+    if (existingBillIndex > -1) {
+      newPendingBills = [...pendingBills];
+      const existingBill = newPendingBills[existingBillIndex];
+      existingBill.transactions.push(newTransaction);
+    } else {
+      const newBill: PendingBill = {
+        id: new Date().toISOString(),
+        name,
+        type,
+        transactions: [newTransaction],
+        ...(mobile && { mobile }),
+      };
+      newPendingBills = [...pendingBills, newBill];
+    }
+    await savePendingBills(newPendingBills);
+    toast({ title: 'Pending bill added.' });
+  };
+
+  const handleClearAllPendingBillsForPerson = async (billId: string) => {
+    const billToClear = pendingBills.find(b => b.id === billId);
+    if (!billToClear) return;
+
+    const newPendingBills = pendingBills.filter(b => b.id !== billId);
+    await savePendingBills(newPendingBills);
+    toast({ title: `${billToClear.name}'s pending bills have been cleared.` });
+  };
+
+  const handleSettleTransaction = async (billId: string, transactionId: string, amount: number) => {
+    const billToUpdate = pendingBills.find(b => b.id === billId);
+    if (!billToUpdate) return;
+    const updatedTransactions = billToUpdate.transactions.filter(tx => tx.id !== transactionId);
+
+    let newPendingBills;
+    if (updatedTransactions.length === 0) {
+      newPendingBills = pendingBills.filter(b => b.id !== billId);
+    } else {
+      newPendingBills = pendingBills.map(b => b.id === billId ? { ...b, transactions: updatedTransactions } : b);
+    }
+    await savePendingBills(newPendingBills);
+    toast({ title: "Transaction Settled", description: `${billToUpdate.name}'s transaction has been settled.` });
+  };
+
   return (
     <div className="p-4 space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -628,6 +704,19 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
         </Card>
       </div>
 
+      <PendingBillsCard
+        title="To Collect from Customers"
+        icon={HandCoins}
+        bills={pendingBills.filter(b => b.type === 'customer')}
+        type="customer"
+        onAddTransaction={handleAddPendingTransaction}
+        onClearAll={handleClearAllPendingBillsForPerson}
+        onSettleTransaction={handleSettleTransaction}
+        totalLimit={customerCreditLimit}
+        allNames={initialCustomers.map(c => c.name)}
+        currency={currency}
+      />
+
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center gap-4 flex-wrap">
@@ -675,9 +764,20 @@ export default function CustomerManagement({ billHistory, tables, customers: ini
                           <p className="text-xs text-muted-foreground">{t('Visits')}</p>
                           <p className="text-lg font-bold">{customer.totalVisits}</p>
                         </div>
-                        <div className="p-2 bg-muted rounded-md col-span-2">
+                        <div className="p-2 bg-muted rounded-md col-span-1">
                           <p className="text-xs text-muted-foreground">{t('Total Spent')}</p>
                           <p className="text-lg font-bold font-mono">{currency}{customer.totalSpent.toFixed(2)}</p>
+                        </div>
+                        <div className="p-2 bg-muted rounded-md col-span-1">
+                          <p className="text-xs text-muted-foreground">{t('Pending')}</p>
+                          <p className="text-lg font-bold text-red-600 font-mono">
+                            {currency}{
+                              (() => {
+                                const pBill = pendingBills.find(pb => pb.mobile === customer.phone && pb.type === 'customer');
+                                return (pBill ? pBill.transactions.reduce((sum, t) => sum + t.amount, 0) : 0).toFixed(2);
+                              })()
+                            }
+                          </p>
                         </div>
                       </div>
                       <div className="text-sm space-y-1">

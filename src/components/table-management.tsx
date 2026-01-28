@@ -621,7 +621,7 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
               <CardDescription>{t('Oversee and manage all tables in your restaurant.')}</CardDescription>
             </div>
             <div className="flex items-center gap-4">
-              <Button variant="secondary" className='bg-orange-500 hover:bg-orange-600 text-white' onClick={() => setIsLayoutManagerOpen(true)}>
+              <Button variant="secondary" className='bg-primary hover:bg-primary/90 text-primary-foreground' onClick={() => setIsLayoutManagerOpen(true)}>
                 <LayoutTemplate className="mr-2 h-4 w-4" />
                 <span>{t('Manage Tables')}</span>
               </Button>
@@ -1069,7 +1069,7 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
               {t('Cancel Reservation')}
             </Button>
             <Button
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => {
                 if (reservedTableAction) {
                   const tableId = reservedTableAction.id;
@@ -1117,7 +1117,7 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
             }}>
               <Edit className="mr-2 h-4 w-4" /> {t('Edit Order')}
             </Button>
-            <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white" onClick={() => {
+            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => {
               if (occupiedTableAction) {
                 const order = orders.find(o => o.tableId === occupiedTableAction.id && o.status !== 'Completed');
                 if (order) onEditOrder(order);
@@ -1182,7 +1182,7 @@ export default function TableManagement({ tables, orders, billHistory, updateTab
               <Bookmark className="mr-2 h-4 w-4" /> {t('Reserve Table')}
             </Button>
             <Button
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => {
                 if (availableTableAction) {
                   onCreateOrder(availableTableAction.id);

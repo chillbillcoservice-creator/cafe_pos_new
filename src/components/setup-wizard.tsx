@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Building2, CheckCircle2, User, Users, Plus, Trash2, ArrowRight, ArrowLeft, Rocket, ChevronDown, ChevronUp, PlusCircle, Truck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Building2, CheckCircle2, User, Users, Plus, Trash2, ArrowRight, ArrowLeft, Rocket, ChevronDown, ChevronUp, PlusCircle, Truck, LayoutGrid, Utensils, Soup, Landmark, Receipt, Users2, Shield } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SetupData, VenueDetails, OwnerDetails, Employee } from "@/lib/types";
 import { ThemeToggle } from "./theme-toggle";
@@ -24,6 +25,37 @@ const steps = [
   { id: 3, title: "Staff", icon: Users },
   { id: 4, title: "Vendors", icon: Truck },
 ];
+
+const DASHBOARD_TABS = [
+  { id: 'pos', label: 'Main POS', icon: Utensils },
+  { id: 'tables', label: 'Tables', icon: LayoutGrid },
+  { id: 'kitchen', label: 'Kitchen & Inv.', icon: Soup },
+  { id: 'vendors', label: 'Vendors', icon: Landmark },
+  { id: 'expenses', label: 'Expenses', icon: Receipt },
+  { id: 'customers', label: 'Customers', icon: Users2 },
+  { id: 'staff', label: 'Staff', icon: Users },
+  { id: 'admin', label: 'Admin', icon: Shield },
+];
+
+const getRoleDefaults = (role: string) => {
+  switch (role) {
+    case 'Admin':
+      return ['pos', 'tables', 'kitchen', 'vendors', 'expenses', 'customers', 'staff', 'admin'];
+    case 'Manager':
+      return ['pos', 'tables', 'kitchen', 'vendors', 'expenses', 'customers', 'staff', 'admin'];
+    case 'Waiter':
+      return ['pos', 'tables'];
+    case 'Head Chef':
+    case 'Chef':
+      return ['kitchen'];
+    case 'Cashier':
+      return ['pos', 'expenses', 'customers'];
+    case 'Delivery Boy':
+      return ['pos'];
+    default:
+      return ['pos'];
+  }
+};
 
 function WizardSection({ title, children, defaultOpen = false }: { title: string, children: React.ReactNode, defaultOpen?: boolean }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -168,7 +200,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
     city: initialData?.venue?.city || "",
     state: initialData?.venue?.state || "",
     zip: initialData?.venue?.zip || "",
-    country: initialData?.venue?.country || "",
+    country: initialData?.venue?.country || "India",
     contactNumber: initialData?.venue?.contactNumber || "",
     email: initialData?.venue?.email || "",
     tagline: initialData?.venue?.tagline || "",
@@ -196,14 +228,14 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
   const [employees, setEmployees] = useState<Partial<Employee>[]>(
     (initialData?.employees && initialData.employees.length > 0)
       ? initialData.employees
-      : [{ name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b' }]
+      : [{ name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b', allowedTabs: getRoleDefaults('Manager') }]
   );
 
   // Vendor State
   const [vendors, setVendors] = useState<any[]>(
     (initialData?.vendors && initialData.vendors.length > 0)
       ? initialData.vendors
-      : [{ name: "", phone: "", email: "", category: "General" }]
+      : [{ name: "", phone: "", email: "", category: "General", location: "", nextPaymentDate: "" }]
   );
 
   const handleNext = () => {
@@ -219,16 +251,34 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
   };
 
   const addEmployeeCard = () => {
-    setEmployees([...employees, { name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b' }]);
+    setEmployees([...employees, { name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b', allowedTabs: getRoleDefaults('Manager') }]);
   };
 
   const updateEmployee = (index: number, field: keyof Employee, value: any) => {
     const newEmps = [...employees];
     const updatedEmp = { ...newEmps[index], [field]: value };
-    // Handle Custom Role logic if needed (store in role field directly or separate?)
-    // For simplicity, we'll assume role handles it or we parse it.
-    // If field is 'role' and value is 'Other', we might need a separate 'customRole' field in the object temporarily or just use 'Other' string.
+
+    // Auto-update allowed tabs if role changes
+    if (field === 'role') {
+      updatedEmp.allowedTabs = getRoleDefaults(value);
+    }
+
     newEmps[index] = updatedEmp;
+    setEmployees(newEmps);
+  };
+
+  const toggleEmployeeTab = (index: number, tabId: string) => {
+    const newEmps = [...employees];
+    const emp = newEmps[index];
+    const currentTabs = emp.allowedTabs || [];
+
+    if (currentTabs.includes(tabId)) {
+      emp.allowedTabs = currentTabs.filter(t => t !== tabId);
+    } else {
+      emp.allowedTabs = [...currentTabs, tabId];
+    }
+
+    newEmps[index] = emp;
     setEmployees(newEmps);
   };
 
@@ -236,7 +286,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
     const newEmps = [...employees];
     if (newEmps.length === 1) {
       // Don't remove the last card, just reset it
-      newEmps[0] = { name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b' };
+      newEmps[0] = { name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b', allowedTabs: getRoleDefaults('Manager') };
     } else {
       newEmps.splice(index, 1);
     }
@@ -357,7 +407,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                 {/* Left Column */}
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-muted-foreground">{t('Business Name')}</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">{t('Business Name')}</Label>
                     <Input
                       value={venue.name}
                       onChange={(e) => handleBasicChange(setVenue, 'name', e.target.value)}
@@ -367,7 +417,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-muted-foreground">{t('Tagline (Optional)')}</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">{t('Tagline (Optional)')}</Label>
                     <Input
                       value={venue.tagline}
                       onChange={(e) => handleBasicChange(setVenue, 'tagline', e.target.value)}
@@ -380,7 +430,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('City')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('City')}</Label>
                       <Input
                         value={venue.city}
                         onChange={(e) => handleBasicChange(setVenue, 'city', e.target.value)}
@@ -389,7 +439,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('State')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('State')}</Label>
                       <Input
                         value={venue.state}
                         onChange={(e) => handleBasicChange(setVenue, 'state', e.target.value)}
@@ -400,7 +450,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-muted-foreground">{t('Zip Code')}</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">{t('Zip Code')}</Label>
                     <Input
                       value={venue.zip}
                       onChange={(e) => handleBasicChange(setVenue, 'zip', e.target.value)}
@@ -415,7 +465,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                 {/* Right Column */}
                 <div className="space-y-4 md:pl-8">
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-muted-foreground">{t('Business Email (Optional)')}</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">{t('Business Email (Optional)')}</Label>
                     <Input
                       value={venue.email}
                       onChange={(e) => handleBasicChange(setVenue, 'email', e.target.value)}
@@ -425,7 +475,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-muted-foreground">{t('Business Mobile (Optional)')}</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">{t('Business Mobile (Optional)')}</Label>
                     <Input
                       value={venue.contactNumber}
                       onChange={(e) => handleBasicChange(setVenue, 'contactNumber', e.target.value)}
@@ -437,7 +487,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   <div className="border-b border-zinc-800 my-2" />
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-muted-foreground">{t('Country')}</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">{t('Country')}</Label>
                     <Select
                       value={venue.country}
                       onValueChange={(val) => {
@@ -469,7 +519,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-muted-foreground">{t('Language')}</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">{t('Language')}</Label>
                     <Select
                       value={language}
                       onValueChange={(val) => {
@@ -513,7 +563,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   {venue.country === 'Other' && (
                     <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
                       <div className="space-y-2">
-                        <Label className="text-xs font-normal text-muted-foreground">{t('Country Name')}</Label>
+                        <Label className="text-sm font-bold text-muted-foreground">{t('Country Name')}</Label>
                         <Input
                           value={customCountry}
                           onChange={(e) => setCustomCountry(e.target.value)}
@@ -522,7 +572,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-xs font-normal text-muted-foreground">{t('Currency Symbol')}</Label>
+                        <Label className="text-sm font-bold text-muted-foreground">{t('Currency Symbol')}</Label>
                         <Input
                           value={customCurrency}
                           onChange={(e) => setCustomCurrency(e.target.value)}
@@ -548,7 +598,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
               {/* Owner 1 Card */}
               <div className="bg-card/50 backdrop-blur-sm p-4 rounded-xl border border-border shadow-sm space-y-4">
                 <div className="space-y-2">
-                  <Label className="text-xs font-normal text-muted-foreground">{t('Owner 1 Name')}</Label>
+                  <Label className="text-sm font-bold text-muted-foreground">{t('Owner 1 Name')}</Label>
                   <Input
                     value={owner.name}
                     onChange={(e) => handleBasicChange(setOwner, 'name', e.target.value)}
@@ -558,7 +608,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-muted-foreground">{t('Mobile (Optional)')}</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">{t('Mobile (Optional)')}</Label>
                     <Input
                       value={owner.contactNumber}
                       onChange={(e) => handleBasicChange(setOwner, 'contactNumber', e.target.value)}
@@ -567,7 +617,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-muted-foreground">{t('Email (Optional)')}</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">{t('Email (Optional)')}</Label>
                     <Input
                       value={owner.email}
                       onChange={(e) => handleBasicChange(setOwner, 'email', e.target.value)}
@@ -577,7 +627,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs font-normal text-muted-foreground">{t('Address (Optional)')}</Label>
+                  <Label className="text-sm font-bold text-muted-foreground">{t('Address (Optional)')}</Label>
                   <textarea
                     value={owner.address || ''}
                     onChange={(e) => handleBasicChange(setOwner, 'address', e.target.value)}
@@ -598,16 +648,16 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   <h4 className="font-bold text-sm text-muted-foreground uppercase">{t('Partner')} {idx + 1}</h4>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-normal text-muted-foreground">{t('Partner Name')}</Label>
+                    <Label className="text-sm font-bold text-muted-foreground">{t('Partner Name')}</Label>
                     <Input value={own.name} onChange={(e) => updateAdditionalOwner(idx, 'name', e.target.value)} placeholder={t('Full Name')} className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Mobile (Optional)')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Mobile (Optional)')}</Label>
                       <Input value={own.contactNumber} onChange={(e) => updateAdditionalOwner(idx, 'contactNumber', e.target.value)} placeholder="e.g., 9876543210" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Email (Optional)')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Email (Optional)')}</Label>
                       <Input value={own.email} onChange={(e) => updateAdditionalOwner(idx, 'email', e.target.value)} placeholder="e.g., partner@example.com" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
                     </div>
                   </div>
@@ -633,26 +683,27 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Employee')} {idx + 1} {t('Name')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Employee')} {idx + 1} {t('Name')}</Label>
                       <Input value={emp.name} onChange={(e) => updateEmployee(idx, 'name', e.target.value)} placeholder={t('Full Name')} className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Email (Optional)')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Email (Optional)')}</Label>
                       <Input value={emp.email} onChange={(e) => updateEmployee(idx, 'email', e.target.value)} placeholder="e.g., employee@example.com" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Role')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Role')}</Label>
                       <Select
-                        value={(["Manager", "Head Chef", "Chef", "Cashier", "Helper", "Cleaner", "Dishwasher"].includes(emp.role || "") ? emp.role : "Other")}
+                        value={(["Admin", "Manager", "Head Chef", "Chef", "Waiter", "Cleaner", "Helper", "Bar Tender", "Dishwasher", "Delivery Boy", "Other"].includes(emp.role || "") ? emp.role : "Other")}
                         onValueChange={(val) => updateEmployee(idx, 'role', val)}
                       >
                         <SelectTrigger className="h-10 bg-zinc-900/50 border-zinc-700 text-sm">
                           <SelectValue placeholder={t('Select a role')} />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="Admin">{t('Admin')}</SelectItem>
                           <SelectItem value="Manager">{t('Manager')}</SelectItem>
                           <SelectItem value="Head Chef">{t('Head Chef')}</SelectItem>
                           <SelectItem value="Chef">{t('Chef')}</SelectItem>
@@ -660,19 +711,20 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                           <SelectItem value="Helper">{t('Helper')}</SelectItem>
                           <SelectItem value="Cleaner">{t('Cleaner')}</SelectItem>
                           <SelectItem value="Dishwasher">{t('Dishwasher')}</SelectItem>
+                          <SelectItem value="Delivery Boy">{t('Delivery Boy')}</SelectItem>
                           <SelectItem value="Other">{t('Other')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Salary')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Salary')}</Label>
                       <Input value={emp.salary?.toString()} onChange={(e) => updateEmployee(idx, 'salary', e.target.value)} placeholder="e.g., 25000" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
                     </div>
                   </div>
 
-                  {(!["Manager", "Head Chef", "Chef", "Cashier", "Helper", "Cleaner", "Dishwasher"].includes(emp.role || "") || emp.role === "Other") && (
+                  {(!["Admin", "Manager", "Head Chef", "Chef", "Waiter", "Cleaner", "Helper", "Bar Tender", "Dishwasher", "Delivery Boy"].includes(emp.role || "") || emp.role === "Other") && (
                     <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Custom Role')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Custom Role')}</Label>
                       <Input
                         value={emp.role === "Other" ? "" : emp.role}
                         onChange={(e) => updateEmployee(idx, 'role', e.target.value)}
@@ -684,12 +736,37 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Mobile No. (Optional)')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Mobile No. (Optional)')}</Label>
                       <Input value={emp.mobile} onChange={(e) => updateEmployee(idx, 'mobile', e.target.value)} placeholder="e.g., 9876543210" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Govt. ID No. (Optional)')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Govt. ID No. (Optional)')}</Label>
                       <Input value={emp.govtId} onChange={(e) => updateEmployee(idx, 'govtId', e.target.value)} placeholder="e.g., Aadhar/PAN" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-2 border-t border-border/50">
+                    <Label className="text-sm font-bold text-muted-foreground">{t('App Access Permissions')}</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {DASHBOARD_TABS.map((tab) => {
+                        const isChecked = (emp.allowedTabs || []).includes(tab.id);
+                        return (
+                          <div key={tab.id} className="flex items-center space-x-2 bg-muted/30 p-2 rounded border border-transparent hover:border-border transition-colors">
+                            <Checkbox
+                              id={`emp-${idx}-${tab.id}`}
+                              checked={isChecked}
+                              onCheckedChange={() => toggleEmployeeTab(idx, tab.id)}
+                            />
+                            <Label
+                              htmlFor={`emp-${idx}-${tab.id}`}
+                              className="text-xs flex items-center gap-1.5 cursor-pointer font-medium"
+                            >
+                              <tab.icon className="h-3.5 w-3.5 opacity-70" />
+                              {t(tab.label)}
+                            </Label>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -712,18 +789,35 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       <Trash2 size={16} />
                     </Button>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Vendor')} {idx + 1} {t('Name')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Vendor Name')}</Label>
                       <Input value={v.name} onChange={(e) => updateVendor(idx, 'name', e.target.value)} placeholder="e.g. Local Veggies Co." className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Mobile No.')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Category')}</Label>
+                      <Input value={v.category} onChange={(e) => updateVendor(idx, 'category', e.target.value)} placeholder={t('e.g., Food & Beverage')} className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Mobile No.')}</Label>
                       <Input value={v.phone} onChange={(e) => updateVendor(idx, 'phone', e.target.value)} placeholder="e.g., 9876543210" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs font-normal text-muted-foreground">{t('Email (Optional)')}</Label>
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Email (Optional)')}</Label>
                       <Input value={v.email} onChange={(e) => updateVendor(idx, 'email', e.target.value)} placeholder="e.g., vendor@example.com" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Location (Optional)')}</Label>
+                      <Input value={v.location} onChange={(e) => updateVendor(idx, 'location', e.target.value)} placeholder="e.g., City Center" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-muted-foreground">{t('Billing Cycle (Optional)')}</Label>
+                      <Input
+                        type="date"
+                        value={v.nextPaymentDate ? (v.nextPaymentDate instanceof Date ? v.nextPaymentDate.toISOString().split('T')[0] : v.nextPaymentDate) : ''}
+                        onChange={(e) => updateVendor(idx, 'nextPaymentDate', e.target.value)}
+                        className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                      />
                     </div>
                   </div>
                 </div>

@@ -16,21 +16,23 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from '@/hooks/use-toast';
-import { Search, Plus, Minus, X, LayoutGrid, List, Rows, ChevronsUpDown, Palette, Shuffle, ClipboardList, Send, CheckCircle2, Users, Bookmark, Sparkles, Repeat, Edit, UserCheck, BookmarkX, Printer, Loader2, BookOpen, Trash2 as TrashIcon, QrCode as QrCodeIcon, MousePointerClick, Eye, Hand, ShoppingBag, BarChart, Users2, Bike, ShoppingBasket, Armchair, Menu as MenuIcon, ShoppingCart } from 'lucide-react';
+import { Search, Plus, Minus, X, LayoutGrid, List, Rows, ChevronsUpDown, Palette, Shuffle, ClipboardList, Send, CheckCircle2, Users, Bookmark, Sparkles, Repeat, Edit, UserCheck, BookmarkX, Printer, Loader2, BookOpen, Trash2 as TrashIcon, QrCode as QrCodeIcon, MousePointerClick, Eye, Hand, ShoppingBag, BarChart, Users2, Bike, ShoppingBasket, Armchair, Menu as MenuIcon, ShoppingCart, Receipt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useDrag, useDrop } from 'react-dnd';
 import { AddItemDialog } from './add-item-dialog';
 import { ManageMenuDialog } from './manage-menu-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
-import type { MenuCategory, MenuItem, OrderItem, Table, Order, Bill, TableStatus, KOTPreference, OrderType, CustomerDetails, InventoryItem, Customer } from '@/lib/types';
+import type { MenuCategory, MenuItem, OrderItem, Table, Order, Bill, TableStatus, KOTPreference, OrderType, CustomerDetails, InventoryItem, Customer, Employee } from '@/lib/types';
 import { generateReceipt, type GenerateReceiptInput } from '@/ai/flows/dynamic-receipt-discount-reasoning';
 import { groupItemsForKOT as groupItemsForKOTUtil } from '@/lib/kot-utils';
 import { PaymentDialog } from './payment-dialog';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Checkbox } from './ui/checkbox';
 import { Textarea } from './ui/textarea';
-import { formatDistanceToNowStrict } from 'date-fns';
+import { formatDistanceToNowStrict, isSameDay, isSameWeek, isSameMonth, format } from 'date-fns';
 
 
 const vegColor = 'bg-green-100 dark:bg-green-900/30';
@@ -130,6 +132,7 @@ interface PosSystemProps {
   customers: Customer[];
   setCustomers: React.Dispatch<React.SetStateAction<Customer[]>>;
   currency: string;
+  employees: Employee[];
 }
 
 const ItemTypes = {
@@ -568,11 +571,13 @@ function HomeDeliveryDialog({
   onOpenChange,
   onSave,
   existingDetails,
+  employees
 }: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (details: CustomerDetails) => void;
   existingDetails?: CustomerDetails;
+  employees: Employee[];
 }) {
   const { t } = useLanguage();
   const [name, setName] = useState('');
@@ -582,44 +587,80 @@ function HomeDeliveryDialog({
   const [street, setStreet] = useState('');
   const [landmark, setLandmark] = useState('');
   const [email, setEmail] = useState('');
+  const [deliveryBoyId, setDeliveryBoyId] = useState('');
+
+  const deliveryBoys = useMemo(() => employees.filter(e => e.role === 'Delivery Boy'), [employees]);
 
   useEffect(() => {
     if (isOpen) {
-      setName(existingDetails?.name || '');
-      setPhone(existingDetails?.phone || '');
-      setAddress(existingDetails?.address || '');
-      setHouseNo(existingDetails?.houseNo || '');
-      setStreet(existingDetails?.street || '');
-      setLandmark(existingDetails?.landmark || '');
-      setEmail(existingDetails?.email || '');
+      if (existingDetails) {
+        setName(existingDetails.name);
+        setPhone(existingDetails.phone);
+        setAddress(existingDetails.address);
+        setHouseNo(existingDetails.houseNo || '');
+        setStreet(existingDetails.street || '');
+        setLandmark(existingDetails.landmark || '');
+        setEmail(existingDetails.email || '');
+        setDeliveryBoyId(existingDetails.deliveryBoyId || '');
+      } else {
+        setName('');
+        setPhone('');
+        setAddress('');
+        setHouseNo('');
+        setStreet('');
+        setLandmark('');
+        setEmail('');
+        setDeliveryBoyId('');
+      }
     }
   }, [isOpen, existingDetails]);
 
   const handleSave = () => {
-    onSave({ name, phone, address, houseNo, street, landmark, email });
+    onSave({
+      name,
+      phone,
+      address,
+      houseNo,
+      street,
+      landmark,
+      email,
+      deliveryBoyId,
+      deliveryBoyName: employees.find(e => e.id === deliveryBoyId)?.name
+    });
     onOpenChange(false);
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>{t('Home Delivery Details')}</DialogTitle>
           <DialogDescription>{t('Enter the customer\'s information for the delivery.')}</DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
-          <div className="space-y-2">
-            <Label htmlFor="customer-name">{t('Customer Name')}</Label>
-            <Input id="customer-name" value={name} onChange={e => setName(e.target.value)} placeholder={t('Enter Name')} required />
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="customer-name">{t('Customer Name')}</Label>
+              <Input id="customer-name" value={name} onChange={e => setName(e.target.value)} placeholder={t('Enter Name')} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customer-phone">{t('Phone Number')}</Label>
+              <Input id="customer-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={t('e.g., 9876543210')} required />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="customer-phone">{t('Phone Number')}</Label>
-            <Input id="customer-phone" type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={t('e.g., 9876543210')} required />
-          </div>
+
           <div className="space-y-2">
             <Label htmlFor="customer-address">{t('Address')}</Label>
-            <Textarea id="customer-address" value={address} onChange={e => setAddress(e.target.value)} placeholder={t('e.g., Main Street...')} required />
+            <Textarea
+              id="customer-address"
+              value={address}
+              onChange={e => setAddress(e.target.value)}
+              placeholder={t('e.g., Main Street...')}
+              className="min-h-[60px] resize-none"
+              required
+            />
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="customer-houseno">{t('House No. (Optional)')}</Label>
@@ -630,13 +671,33 @@ function HomeDeliveryDialog({
               <Input id="customer-street" value={street} onChange={e => setStreet(e.target.value)} placeholder={t('e.g., Temple Road')} />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="customer-landmark">{t('Landmark (Optional)')}</Label>
-            <Input id="customer-landmark" value={landmark} onChange={e => setLandmark(e.target.value)} placeholder={t('e.g., Near Post Office')} />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="customer-landmark">{t('Landmark (Optional)')}</Label>
+              <Input id="customer-landmark" value={landmark} onChange={e => setLandmark(e.target.value)} placeholder={t('e.g., Near Post Office')} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customer-email">{t('Email (Optional)')}</Label>
+              <Input id="customer-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t('e.g., a@b.com')} />
+            </div>
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="customer-email">{t('Email (Optional)')}</Label>
-            <Input id="customer-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t('e.g., a@b.com')} />
+            <Label>{t('Assign Delivery Boy (Optional)')}</Label>
+            <Select value={deliveryBoyId} onValueChange={setDeliveryBoyId}>
+              <SelectTrigger>
+                <SelectValue placeholder={t('Select Delivery Boy')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">-- {t('None')} --</SelectItem>
+                {deliveryBoys.map(boy => (
+                  <SelectItem key={boy.id} value={boy.id}>
+                    {boy.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>
@@ -689,9 +750,11 @@ export default function PosSystem({
   customers,
   setCustomers,
   currency,
+  employees
 }: PosSystemProps) {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isHomeDeliveryDialogOpen, setIsHomeDeliveryDialogOpen] = useState(false);
   const [easyMode, setEasyMode] = useState(false);
   const [lastKotHistory, setLastKotHistory] = useState<Record<string, OrderItem[]>>({});
   const [isEasyModeInitialized, setIsEasyModeInitialized] = useState(false);
@@ -718,10 +781,38 @@ export default function PosSystem({
   const [isEasyModeAlertOpen, setIsEasyModeAlertOpen] = useState(false);
   const hasSeenEasyModeAlert = useRef(false);
   const [isItemStatusDialogOpen, setIsItemStatusDialogOpen] = useState(false);
-  const [isHomeDeliveryDialogOpen, setIsHomeDeliveryDialogOpen] = useState(false);
   const [customerDetails, setCustomerDetails] = useState<CustomerDetails | undefined>();
   const [colorShade, setColorShade] = useState<ColorShade>('light');
   const [mobileTab, setMobileTab] = useState<MobileTab>('menu');
+  const [isRecentOrdersOpen, setIsRecentOrdersOpen] = useState(false);
+  const [selectedBillSummary, setSelectedBillSummary] = useState<Bill | null>(null);
+
+  const handlePrintBillSummary = (bill: Bill) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Receipt for Bill #${bill.id}</title>
+            <style>
+              body { font-family: monospace; margin: 20px; }
+              pre { white-space: pre-wrap; word-wrap: break-word; }
+            </style>
+          </head>
+          <body>
+            <pre>${bill.receiptPreview}</pre>
+            <script>
+              window.onload = function() {
+                window.print();
+                window.close();
+              }
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  };
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -940,7 +1031,7 @@ export default function PosSystem({
   }, [easyMode, isEasyModeInitialized]);
 
   const handleEasyModeChange = (checked: boolean) => {
-    if (checked && !hasSeenEasyModeAlert.current) {
+    if (checked) {
       setIsEasyModeAlertOpen(true);
     } else {
       setEasyMode(checked);
@@ -1019,6 +1110,11 @@ export default function PosSystem({
   const handleItemClick = (item: MenuItem) => {
     if (easyMode) {
       addToOrder(item, 1);
+      toast({
+        title: t("Item Added"),
+        description: `${item.name} ${t('added to order')}`,
+        duration: 2000,
+      });
     }
   };
 
@@ -1027,7 +1123,8 @@ export default function PosSystem({
       addToOrder(item, 1);
       toast({
         title: t("Item Added"),
-        description: `${t('added to the current order.')}`
+        description: `${item.name} ${t('added to the current order.')}`,
+        duration: 2000,
       });
     }
   }
@@ -1113,7 +1210,9 @@ export default function PosSystem({
           </head>
           <body>
             <h2>${isUpdate ? `${t('UPDATE')} - ${kotTitle}` : kotTitle}</h2>
-            <h3>{t('Order ID:')} ${String(order.id).padStart(3, '0')} | ${title}</h3>
+            <h2>${isUpdate ? `${t('UPDATE')} - ${kotTitle}` : kotTitle}</h2>
+            <h3>{t('Order ID:')} ${String(order.id).length < 13 ? String(order.id).padStart(3, '0') : order.id} | ${title}</h3>
+            <hr>
             <hr>
             <ul>
             ${itemsToPrint.map(item => `
@@ -1228,7 +1327,11 @@ export default function PosSystem({
           finalOrderState = { ...activeOrder, items: finalSavedItemsList };
           setOrders(prev => prev.map(o => o.id === activeOrder!.id ? finalOrderState : o));
         } else {
-          const maxId = Math.max(0, ...orders.map(o => parseInt(o.id)).filter(id => !isNaN(id)), ...billHistory.map(b => parseInt(b.id)).filter(id => !isNaN(id)));
+          const allIds = [
+            ...orders.map(o => parseInt(o.id, 10)).filter(id => !isNaN(id) && id < 1000000),
+            ...billHistory.map(b => parseInt(b.id, 10)).filter(id => !isNaN(id) && id < 1000000),
+          ];
+          const maxId = allIds.length > 0 ? Math.max(0, ...allIds) : 0;
           const newId = (maxId + 1).toString();
           finalOrderState = {
             id: newId,
@@ -1414,7 +1517,11 @@ export default function PosSystem({
     }
 
 
-    const maxId = Math.max(0, ...billHistory.map(b => parseInt(b.id)).filter(id => !isNaN(id)), ...orders.map(o => parseInt(o.id)).filter(id => !isNaN(id)));
+    const allIds = [
+      ...billHistory.map(b => parseInt(b.id, 10)).filter(id => !isNaN(id) && id < 1000000),
+      ...orders.map(o => parseInt(o.id, 10)).filter(id => !isNaN(id) && id < 1000000)
+    ];
+    const maxId = allIds.length > 0 ? Math.max(0, ...allIds) : 0;
     const newId = (maxId + 1).toString();
 
     const billPayload: Bill = {
@@ -2047,9 +2154,10 @@ export default function PosSystem({
       {/* Mobile View: Tabs */}
       <div className="md:hidden h-full flex flex-col">
         <Tabs value={mobileTab} onValueChange={(value) => setMobileTab(value as MobileTab)} className="flex-grow flex flex-col">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="menu"><MenuIcon className="mr-2 h-4 w-4" />{t('Menu')}</TabsTrigger>
             <TabsTrigger value="order"><ShoppingCart className="mr-2 h-4 w-4" />{t('Order')} ({orderItems.length})</TabsTrigger>
+            <TabsTrigger value="history" onClick={() => setIsRecentOrdersOpen(true)}><Receipt className="mr-2 h-4 w-4" />{t('History')}</TabsTrigger>
           </TabsList>
           <TabsContent value="menu" className="flex-grow mt-0 overflow-y-auto">
             <div className="flex flex-col h-full">
@@ -2210,6 +2318,9 @@ export default function PosSystem({
                   </RadioGroup>
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setIsRecentOrdersOpen(true)}>
+                    <Receipt className="mr-2 h-4 w-4" /> {t('Recent Orders')}
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => setIsItemStatusDialogOpen(true)}>
                     <BarChart className="mr-2 h-4 w-4" /> {t('Item Status')}
                   </Button>
@@ -2365,6 +2476,7 @@ export default function PosSystem({
         onOpenChange={setIsHomeDeliveryDialogOpen}
         onSave={handleSaveDeliveryDetails}
         existingDetails={customerDetails}
+        employees={employees}
       />
       <Dialog open={isReserveDialogOpen} onOpenChange={setIsReserveDialogOpen}>
         <DialogContent>
@@ -2465,6 +2577,150 @@ export default function PosSystem({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Sheet open={isRecentOrdersOpen} onOpenChange={setIsRecentOrdersOpen}>
+        <SheetContent side="right" className="sm:max-w-md w-full p-0 flex flex-col">
+          <SheetHeader className="p-6 border-b">
+            <SheetTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5" />
+              {t('Recent Orders')}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="flex-grow overflow-hidden flex flex-col">
+            <Tabs defaultValue="today" className="w-full flex-grow flex flex-col">
+              <TabsList className="grid w-full grid-cols-3 rounded-none border-b bg-transparent h-12">
+                <TabsTrigger value="today" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">{t('Today')}</TabsTrigger>
+                <TabsTrigger value="weekly" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">{t('Weekly')}</TabsTrigger>
+                <TabsTrigger value="monthly" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">{t('Monthly')}</TabsTrigger>
+              </TabsList>
+              <div className="flex-grow overflow-y-auto p-4 custom-scrollbar">
+                <TabsContent value="today" className="m-0 focus-visible:ring-0">
+                  <div className="mb-4 grid grid-cols-2 gap-2">
+                    <Card className="p-3 bg-primary/5 border-primary/20">
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{t('Orders')}</p>
+                      <p className="text-2xl font-bold">{billHistory.filter(b => isSameDay(new Date(b.timestamp), new Date())).length}</p>
+                    </Card>
+                    <Card className="p-3 bg-primary/5 border-primary/20">
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{t('Revenue')}</p>
+                      <p className="text-2xl font-bold text-primary">{currency}{billHistory.filter(b => isSameDay(new Date(b.timestamp), new Date())).reduce((sum, b) => sum + b.total, 0).toFixed(0)}</p>
+                    </Card>
+                  </div>
+                  <RecentOrdersList
+                    bills={billHistory.filter(b => isSameDay(new Date(b.timestamp), new Date()))}
+                    onView={setSelectedBillSummary}
+                    onPrint={handlePrintBillSummary}
+                    currency={currency}
+                    t={t}
+                  />
+                </TabsContent>
+                <TabsContent value="weekly" className="m-0 focus-visible:ring-0">
+                  <div className="mb-4 grid grid-cols-2 gap-2">
+                    <Card className="p-3 bg-primary/5 border-primary/20">
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{t('Orders')}</p>
+                      <p className="text-2xl font-bold">{billHistory.filter(b => isSameWeek(new Date(b.timestamp), new Date())).length}</p>
+                    </Card>
+                    <Card className="p-3 bg-primary/5 border-primary/20">
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{t('Revenue')}</p>
+                      <p className="text-2xl font-bold text-primary">{currency}{billHistory.filter(b => isSameWeek(new Date(b.timestamp), new Date())).reduce((sum, b) => sum + b.total, 0).toFixed(0)}</p>
+                    </Card>
+                  </div>
+                  <RecentOrdersList
+                    bills={billHistory.filter(b => isSameWeek(new Date(b.timestamp), new Date()))}
+                    onView={setSelectedBillSummary}
+                    onPrint={handlePrintBillSummary}
+                    currency={currency}
+                    t={t}
+                  />
+                </TabsContent>
+                <TabsContent value="monthly" className="m-0 focus-visible:ring-0">
+                  <div className="mb-4 grid grid-cols-2 gap-2">
+                    <Card className="p-3 bg-primary/5 border-primary/20">
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{t('Orders')}</p>
+                      <p className="text-2xl font-bold">{billHistory.filter(b => isSameMonth(new Date(b.timestamp), new Date())).length}</p>
+                    </Card>
+                    <Card className="p-3 bg-primary/5 border-primary/20">
+                      <p className="text-xs text-muted-foreground uppercase font-bold">{t('Revenue')}</p>
+                      <p className="text-2xl font-bold text-primary">{currency}{billHistory.filter(b => isSameMonth(new Date(b.timestamp), new Date())).reduce((sum, b) => sum + b.total, 0).toFixed(0)}</p>
+                    </Card>
+                  </div>
+                  <RecentOrdersList
+                    bills={billHistory.filter(b => isSameMonth(new Date(b.timestamp), new Date()))}
+                    onView={setSelectedBillSummary}
+                    onPrint={handlePrintBillSummary}
+                    currency={currency}
+                    t={t}
+                  />
+                </TabsContent>
+              </div>
+            </Tabs>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={!!selectedBillSummary} onOpenChange={() => setSelectedBillSummary(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('Bill Receipt')} #{selectedBillSummary?.id}</DialogTitle>
+            <DialogDescription>
+              {selectedBillSummary?.timestamp && format(new Date(selectedBillSummary.timestamp), 'PPpp')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 p-4 rounded-lg bg-muted font-mono text-sm overflow-auto max-h-[60vh] whitespace-pre-wrap">
+            {selectedBillSummary?.receiptPreview}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedBillSummary(null)}>{t('Close')}</Button>
+            <Button onClick={() => handlePrintBillSummary(selectedBillSummary!)}>
+              <Printer className="mr-2 h-4 w-4" />
+              {t('Print Again')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div >
+  );
+}
+
+function RecentOrdersList({ bills, onView, onPrint, currency, t }: { bills: Bill[], onView: (b: Bill) => void, onPrint: (b: Bill) => void, currency: string, t: any }) {
+  const sortedBills = [...bills].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  if (sortedBills.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+        <Receipt className="h-12 w-12 opacity-20 mb-4" />
+        <p>{t('No orders found for this period.')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {sortedBills.map(bill => (
+        <div key={bill.id} className="p-3 rounded-lg border bg-card flex items-center justify-between group hover:border-primary transition-colors">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="font-bold">#{String(bill.id).padStart(3, '0')}</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-muted font-medium">
+                {bill.orderType === 'Dine-In' ? `${t('Table')} ${bill.tableId}` : t(bill.orderType)}
+              </span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {format(new Date(bill.timestamp), 'p')} • {bill.orderItems.length} {t('items')}
+            </div>
+            <div className="text-sm font-bold text-primary">
+              {currency}{bill.total.toFixed(2)}
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onView(bill)}>
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => onPrint(bill)}>
+              <Printer className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

@@ -1,29 +1,28 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: 'PT Sans', sans-serif;
+  font-family: 'Outfit', sans-serif;
 }
 
 @layer base {
   :root {
-    --background: 220 20% 96%; /* Light Gray-Blue */
-    --foreground: 220 15% 20%; /* Dark Slate */
+    --background: 220 20% 96%;
+    --foreground: 220 15% 20%;
     --card: 0 0% 100%;
     --card-foreground: 220 15% 20%;
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 20%;
-    --primary: 25 80% 55%; /* Warm Orange */
+    --primary: 25 80% 55%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 215 28% 80%; /* Muted Blue */
+    --secondary: 215 28% 80%;
     --secondary-foreground: 220 15% 20%;
-    --muted: 220 20% 90%; /* Lighter Gray-Blue */
+    --muted: 220 20% 90%;
     --muted-foreground: 220 10% 45%;
-    --accent: 205 90% 94%; /* Very Light Blue */
+    --accent: 205 90% 94%;
     --accent-foreground: 205 90% 30%;
-    --destructive: 0 72% 51%; /* Red */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 15% 85%;
     --input: 220 15% 90%;
@@ -35,22 +34,23 @@ body {
     --chart-5: 220 70% 75%;
     --radius: 0.5rem;
   }
+
   .dark {
-    --background: 220 20% 12%; /* Dark Slate Blue */
-    --foreground: 220 15% 95%; /* Light Gray */
+    --background: 220 20% 12%;
+    --foreground: 220 15% 95%;
     --card: 220 20% 16%;
     --card-foreground: 220 15% 95%;
     --popover: 220 20% 16%;
     --popover-foreground: 220 15% 95%;
-    --primary: 25 75% 60%; /* Warm Orange */
+    --primary: 25 75% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 215 25% 30%; /* Dark Muted Blue */
+    --secondary: 215 25% 30%;
     --secondary-foreground: 220 15% 95%;
     --muted: 220 20% 20%;
     --muted-foreground: 220 10% 65%;
     --accent: 205 80% 25%;
     --accent-foreground: 205 80% 95%;
-    --destructive: 0 63% 45%; /* Red */
+    --destructive: 0 63% 45%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 15% 30%;
     --input: 220 15% 25%;
@@ -67,6 +67,7 @@ body {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -76,7 +77,46 @@ body {
   .kitchen-tabs .c-PJLV-ifVPEfe-css {
     background-color: hsl(var(--muted) / 0.5);
   }
+
   .dark .kitchen-tabs .c-PJLV-ifVPEfe-css {
     background-color: hsl(var(--muted) / 0.5);
   }
+}
+
+/* Theme Color Overrides - Global Scope */
+html.theme-orange {
+  --primary: 25 80% 55%;
+  --ring: 25 80% 55%;
+}
+
+html.dark.theme-orange {
+  --primary: 25 80% 55%;
+}
+
+html.theme-blue {
+  --primary: 221 83% 53%;
+  --ring: 221 83% 53%;
+}
+
+html.dark.theme-blue {
+  --primary: 217 91% 60%;
+}
+
+html.theme-green {
+  --primary: 142 71% 45%;
+  --ring: 142 71% 45%;
+}
+
+html.dark.theme-green {
+  --primary: 142 70% 50%;
+}
+
+html.theme-rose {
+  --primary: 346 84% 61%;
+  --ring: 346 84% 61%;
+}
+
+html.theme-violet {
+  --primary: 262 83% 58%;
+  --ring: 262 83% 58%;
 }

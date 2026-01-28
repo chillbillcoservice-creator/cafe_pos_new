@@ -44,14 +44,15 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlusCircle, Edit, Trash2, CalendarIcon, Building, Repeat, List, ChevronsUpDown, Check, AlertTriangle, HandCoins, Landmark, Settings, ChevronDown } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, CalendarIcon, Building, Repeat, List, ChevronsUpDown, Check, AlertTriangle, HandCoins, Landmark, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
-import { format, isSameDay, isSameMonth, isSameYear, startOfDay, isAfter } from 'date-fns';
+import { format, isSameDay, isSameMonth, isSameYear, startOfDay, isAfter, isValid } from 'date-fns';
 import type { Expense, Vendor, PendingBill, PendingBillTransaction, Customer } from '@/lib/types';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { AddOrEditVendorDialog, ManageVendorsDialog } from './vendor-management';
 
 interface ExpensesTrackerProps {
   expenses: Expense[];
@@ -66,424 +67,7 @@ interface ExpensesTrackerProps {
   currency?: string;
 }
 
-function AddOrEditVendorDialog({
-  open,
-  onOpenChange,
-  onSave,
-  existingVendor,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (vendor: Omit<Vendor, 'id'> & { id?: string }) => void;
-  existingVendor: Vendor | null;
-}) {
-  const { t } = useLanguage();
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [phone, setPhone] = useState('');
 
-  useEffect(() => {
-    if (existingVendor) {
-      setName(existingVendor.name);
-      setCategory(existingVendor.category);
-      setPhone(existingVendor.phone || '');
-    } else {
-      setName('');
-      setCategory('');
-      setPhone('');
-    }
-  }, [existingVendor, open]);
-
-  const handleSave = () => {
-    if (name && category) {
-      onSave({
-        id: existingVendor?.id,
-        name,
-        category,
-        phone,
-      });
-      onOpenChange(false);
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{existingVendor ? t('Edit Vendor') : t('Add Vendor')}</DialogTitle>
-          <DialogDescription>
-            {t('Manage your suppliers and service providers.')}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="vendor-name">{t('Vendor Name')}</Label>
-            <Input id="vendor-name" placeholder={t('e.g., Local Farm Produce')} value={name} onChange={e => setName(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="vendor-category">{t('Category')}</Label>
-            <Input id="vendor-category" placeholder={t('e.g., Food & Beverage')} value={category} onChange={e => setCategory(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="vendor-phone">{t('Mobile No. (Optional)')}</Label>
-            <Input id="vendor-phone" placeholder={t('e.g., 9876543210')} value={phone} onChange={e => setPhone(e.target.value)} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
-          <Button onClick={handleSave}>{t('Save Vendor')}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-
-function ManageVendorsDialog({
-  open,
-  onOpenChange,
-  vendors,
-  onEditVendor,
-  onDeleteVendor,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  vendors: Vendor[];
-  onEditVendor: (vendor: Vendor) => void;
-  onDeleteVendor: (vendorId: string) => void;
-}) {
-  const { t } = useLanguage();
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{t('Manage Vendors')}</DialogTitle>
-          <DialogDescription>{t('View, edit, or delete your vendors.')}</DialogDescription>
-        </DialogHeader>
-        <div className="max-h-[60vh] overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('Name')}</TableHead>
-                <TableHead>{t('Category')}</TableHead>
-                <TableHead>{t('Mobile No.')}</TableHead>
-                <TableHead className="text-right">{t('Actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {vendors.length > 0 ? (
-                vendors.map((vendor) => (
-                  <TableRow key={vendor.id}>
-                    <TableCell className="font-medium">{vendor.name}</TableCell>
-                    <TableCell>{vendor.category}</TableCell>
-                    <TableCell>{vendor.phone || 'N/A'}</TableCell>
-                    <TableCell className="text-right">
-                      <Button key="edit-btn" variant="ghost" size="icon" onClick={() => onEditVendor(vendor)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog key="delete-dialog">
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t('Are you sure?')}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {t('This will permanently delete the vendor')} "{vendor.name}". {t('This action cannot be undone.')}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onDeleteVendor(vendor.id)}>{t('Delete')}</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center">{t('No vendors found.')}</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Close')}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function AddOrEditPendingBillDialog({
-  open,
-  onOpenChange,
-  onSave,
-  existingNames,
-  type,
-  currency,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (name: string, amount: number, mobile?: string, dueDate?: Date) => void;
-  existingNames: string[];
-  type: 'customer' | 'vendor';
-  currency: string;
-}) {
-  const { t } = useLanguage();
-  const [isNew, setIsNew] = useState(true);
-  const [selectedName, setSelectedName] = useState('');
-  const [newName, setNewName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [dueDate, setDueDate] = useState<Date | undefined>();
-  const [mobile, setMobile] = useState('');
-
-  useEffect(() => {
-    if (open) {
-      setIsNew(true);
-      setSelectedName('');
-      setNewName('');
-      setAmount('');
-      setDueDate(undefined);
-      setMobile('');
-    }
-  }, [open]);
-
-  const handleSave = () => {
-    const finalName = isNew ? newName : selectedName;
-    if (!finalName || !amount) {
-      alert('Please provide a name and amount.');
-      return;
-    }
-    onSave(finalName, parseFloat(amount), mobile, dueDate);
-    onOpenChange(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t('Add Pending Bill')}</DialogTitle>
-          <DialogDescription>
-            {t('Record a new transaction for a')} {t(type)}.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>{t('Select or Add')} {type === 'customer' ? t('Customer') : t('Vendor')}</Label>
-            <div className="flex items-center gap-4">
-              <Button
-                variant={!isNew ? "default" : "outline"}
-                onClick={() => setIsNew(false)}
-                className={cn(!isNew && "bg-primary text-primary-foreground")}
-              >
-                {t('Existing')}
-              </Button>
-              <Button
-                variant={isNew ? "default" : "outline"}
-                onClick={() => setIsNew(true)}
-                className={cn(isNew && "bg-primary text-primary-foreground")}
-              >
-                {t('New')}
-              </Button>
-            </div>
-            {isNew ? (
-              <Input
-                placeholder={`${t('New')} ${t(type)} ${t('name')}`}
-                value={newName}
-                onChange={e => setNewName(e.target.value)}
-              />
-            ) : (
-              <Select onValueChange={setSelectedName} value={selectedName}>
-                <SelectTrigger>
-                  <SelectValue placeholder={`${t('Select existing')} ${t(type)}`} />
-                </SelectTrigger>
-                <SelectContent>
-                  {existingNames.map(name => (
-                    <SelectItem key={name} value={name}>{name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          {isNew && (
-            <div className="space-y-2">
-              <Label htmlFor="mobile">{t('Mobile No. (Optional)')}</Label>
-              <Input id="mobile" placeholder={t('e.g., 9876543210')} value={mobile} onChange={e => setMobile(e.target.value)} />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="amount">{t('Amount')} ({currency})</Label>
-            <Input id="amount" type="number" placeholder="e.g., 500" value={amount} onChange={e => setAmount(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label>{t('Due Date (Optional)')}</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant={"outline"} className="w-full justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {dueDate ? format(dueDate, "PPP") : <span>{t('Pick a date')}</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar mode="single" selected={dueDate} onSelect={setDueDate} />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
-          <Button onClick={handleSave}>{t('Save Bill')}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-
-function PendingBillsCard({
-  title,
-  icon,
-  bills,
-  type,
-  onAddTransaction,
-  onClearAll,
-  onSettleTransaction,
-  totalLimit,
-  allNames = [],
-  currency,
-}: {
-  title: string;
-  icon: React.ElementType;
-  bills: PendingBill[];
-  type: 'customer' | 'vendor';
-  onAddTransaction: (type: 'customer' | 'vendor', name: string, amount: number, mobile?: string, dueDate?: Date) => void;
-  onClearAll: (billId: string) => void;
-  onSettleTransaction: (billId: string, transactionId: string, amount: number) => void;
-  totalLimit: number;
-  allNames?: string[];
-  currency: string;
-}) {
-  const { t } = useLanguage();
-  const [isAddBillOpen, setIsAddBillOpen] = useState(false);
-
-  const totalPending = useMemo(() => bills.reduce((total, bill) => {
-    return total + bill.transactions.reduce((sum, t) => sum + t.amount, 0);
-  }, 0), [bills]);
-
-  const totalProgress = totalLimit > 0 ? (totalPending / totalLimit) * 100 : 0;
-
-  const existingNames = useMemo(() => {
-    const billNames = new Set(bills.map(b => b.name));
-    allNames.forEach(name => billNames.add(name));
-    return Array.from(billNames);
-  }, [bills, allNames]);
-
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="flex items-center gap-2">
-            {React.createElement(icon, { className: "h-6 w-6" })}
-            {t(title)}
-          </CardTitle>
-          <Button onClick={() => setIsAddBillOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> {t('Add Bill')}
-          </Button>
-        </div>
-        <CardDescription>
-          {t('Total Pending')}: <span className={cn("font-bold", type === 'customer' ? 'text-green-600' : 'text-red-600')}>{currency}{totalPending.toFixed(2)}</span>
-        </CardDescription>
-        <div className="space-y-1 mt-2">
-          <div key="pending-info" className="flex justify-between items-center text-sm">
-            <span className={cn("font-bold", type === 'customer' ? 'text-green-600' : 'text-red-600')}>
-              {currency}{totalPending.toFixed(2)}
-            </span>
-            <span className="text-muted-foreground">{t('Overall Limit')}: {currency}{totalLimit.toLocaleString()}</span>
-          </div>
-          <Progress key="progress-bar" value={totalProgress} indicatorClassName={totalProgress > 100 ? "bg-red-500" : (type === 'customer' ? 'bg-green-500' : 'bg-red-500')} />
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="max-h-96 overflow-y-auto space-y-2">
-          {bills.map((bill) => {
-            const totalForName = bill.transactions.reduce((sum, t) => sum + t.amount, 0);
-            return (
-              <Collapsible key={bill.id} className="p-2 border rounded-lg">
-                <div className="flex items-center justify-between">
-                  <CollapsibleTrigger className="flex flex-grow items-center gap-2 text-left">
-                    <ChevronsUpDown className="h-4 w-4" />
-                    <span className="font-medium">{bill.name}</span>
-                    <span className={cn("font-semibold text-sm", type === 'customer' ? 'text-green-600' : 'text-red-600')}>
-                      ({currency}{totalForName.toFixed(2)})
-                    </span>
-                  </CollapsibleTrigger>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm">{t('Clear All')}</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{t('Are you sure?')}</AlertDialogTitle>
-                        <AlertDialogDescription>{t('This will mark all pending bills for')} {bill.name} {t('as paid and clear their balance. This action cannot be undone.')}</AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => onClearAll(bill.id)}>{t('Confirmed')}</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-
-                <CollapsibleContent className="mt-2 space-y-1 pr-2 max-h-48 overflow-y-auto">
-                  {bill.transactions.map(tx => (
-                    <div key={tx.id} className="flex justify-between items-center p-1.5 bg-muted/50 rounded-md text-sm group">
-                      <div>
-                        <span>{format(new Date(tx.date), 'PPP')}</span>
-                        <span className={cn("font-semibold ml-4", type === 'customer' ? 'text-green-700' : 'text-red-700')}>{currency}{tx.amount.toFixed(2)}</span>
-                      </div>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 h-7">{t('Settle')}</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>{t('Settle this transaction?')}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              {t('This will settle the transaction of')} {currency}{tx.amount.toFixed(2)} {t('for')} {bill.name}. {t('This cannot be undone.')}
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => onSettleTransaction(bill.id, tx.id, tx.amount)}>{t('Settle')}</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  ))}
-                </CollapsibleContent>
-              </Collapsible>
-            )
-          })}
-        </div>
-        <AddOrEditPendingBillDialog
-          open={isAddBillOpen}
-          onOpenChange={setIsAddBillOpen}
-          onSave={(name, amount, mobile, dueDate) => onAddTransaction(type, name, amount, mobile, dueDate)}
-          existingNames={existingNames}
-          type={type}
-          currency={currency}
-        />
-      </CardContent>
-    </Card>
-  );
-}
 
 
 export default function ExpensesTracker({
@@ -508,8 +92,7 @@ export default function ExpensesTracker({
   const [isVendorManageDialogOpen, setIsVendorManageDialogOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
   const [expenseFilter, setExpenseFilter] = useState<'all' | 'today' | 'month'>('all');
-  const [isLimitExceededDialogOpen, setIsLimitExceededDialogOpen] = useState(false);
-  const [limitExceededInfo, setLimitExceededInfo] = useState({ type: '', limit: 0 });
+
 
   // Dialog state for expense details
   const [isExpenseDetailOpen, setIsExpenseDetailOpen] = useState(false);
@@ -518,25 +101,32 @@ export default function ExpensesTracker({
 
   // Form state for Expenses
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [vendorSelectOpen, setVendorSelectOpen] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [vendorId, setVendorId] = useState<string | undefined>(undefined);
+  const [vendorSearchTerm, setVendorSearchTerm] = useState('');
 
   const selectedVendor = vendors.find(v => v.id === vendorId);
   const expenseCategory = selectedVendor?.category || 'Miscellaneous';
 
   const filteredExpenses = useMemo(() => {
     const now = new Date();
+    let filtered: Expense[] = [];
     switch (expenseFilter) {
       case 'today':
-        return initialExpenses.filter(e => isSameDay(new Date(e.date), now));
+        filtered = initialExpenses.filter(e => isSameDay(new Date(e.date), now));
+        break;
       case 'month':
-        return initialExpenses.filter(e => isSameMonth(new Date(e.date), now) && isSameYear(new Date(e.date), now));
+        filtered = initialExpenses.filter(e => isSameMonth(new Date(e.date), now) && isSameYear(new Date(e.date), now));
+        break;
       case 'all':
       default:
-        return initialExpenses;
+        filtered = [...initialExpenses];
+        break;
     }
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [initialExpenses, expenseFilter]);
 
   const resetForm = () => {
@@ -545,6 +135,7 @@ export default function ExpensesTracker({
     setDescription('');
     setAmount('');
     setVendorId(undefined);
+    setVendorSearchTerm('');
   }
 
   const saveExpenses = async (newExpenses: Expense[]) => {
@@ -630,114 +221,9 @@ export default function ExpensesTracker({
     setIsVendorAddDialogOpen(true);
   }
 
-  const savePendingBills = async (newPendingBills: PendingBill[]) => {
-    try {
-      // This would be an API call in a real app
-      // await fetch('/api/pending-bills', { ... });
-      setPendingBills(newPendingBills);
-    } catch (error) {
-      console.error(error);
-      toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not save pending bills.' });
-    }
-  }
 
-  const handleAddPendingTransaction = async (type: 'customer' | 'vendor', name: string, amount: number, mobile?: string, dueDate?: Date) => {
-    const totalPending = pendingBills
-      .filter(b => b.type === type)
-      .reduce((total, bill) => total + bill.transactions.reduce((sum, t) => sum + t.amount, 0), 0);
 
-    const limit = type === 'customer' ? customerCreditLimit : vendorCreditLimit;
 
-    if (totalPending + amount > limit) {
-      setLimitExceededInfo({ type: type, limit: limit });
-      setIsLimitExceededDialogOpen(true);
-      return;
-    }
-
-    const newTransaction: PendingBillTransaction = {
-      id: new Date().toISOString(), // Simple unique ID
-      amount,
-      date: new Date(),
-    };
-
-    const existingBillIndex = pendingBills.findIndex(b => b.name.toLowerCase() === name.toLowerCase() && b.type === type);
-
-    let newPendingBills;
-
-    if (existingBillIndex > -1) {
-      newPendingBills = [...pendingBills];
-      const existingBill = newPendingBills[existingBillIndex];
-      existingBill.transactions.push(newTransaction);
-    } else {
-      const newBill: PendingBill = {
-        id: new Date().toISOString(),
-        name,
-        type,
-        transactions: [newTransaction],
-        ...(mobile && { mobile }),
-      };
-      newPendingBills = [...pendingBills, newBill];
-    }
-    await savePendingBills(newPendingBills);
-    toast({ title: 'Pending bill added.' });
-  };
-
-  const handleClearAllPendingBillsForPerson = async (billId: string) => {
-    const billToClear = pendingBills.find(b => b.id === billId);
-    if (!billToClear) return;
-
-    const newPendingBills = pendingBills.filter(b => b.id !== billId);
-
-    if (billToClear.type === 'vendor') {
-      const totalPaid = billToClear.transactions.reduce((sum, tx) => sum + tx.amount, 0);
-      const vendor = vendors.find(v => v.name.toLowerCase() === billToClear.name.toLowerCase());
-      const newExpense: Expense = {
-        id: new Date().toISOString(),
-        date: new Date(),
-        category: vendor?.category || 'Vendor Payment',
-        description: `Cleared all pending bills for ${billToClear.name}.`,
-        amount: totalPaid,
-        vendorId: vendor?.id || null,
-      };
-      await saveExpenses([...initialExpenses, newExpense]);
-      toast({ title: "Expense Recorded", description: `An expense of ${currency}${totalPaid.toFixed(2)} for ${billToClear.name} has been recorded.` });
-    }
-
-    await savePendingBills(newPendingBills);
-    toast({ title: `${billToClear.name}'s pending bills have been cleared.` });
-  };
-
-  const handleSettleTransaction = async (billId: string, transactionId: string, amount: number) => {
-    const billToUpdate = pendingBills.find(b => b.id === billId);
-    if (!billToUpdate) return;
-
-    const updatedTransactions = billToUpdate.transactions.filter(tx => tx.id !== transactionId);
-
-    let newExpenses = [...initialExpenses];
-    if (billToUpdate.type === 'vendor') {
-      const vendor = vendors.find(v => v.name.toLowerCase() === billToUpdate.name.toLowerCase());
-      const newExpense: Expense = {
-        id: new Date().toISOString(),
-        date: new Date(),
-        category: vendor?.category || 'Vendor Payment',
-        description: `Settled transaction for ${billToUpdate.name}.`,
-        amount: amount,
-        vendorId: vendor?.id || null,
-      };
-      newExpenses.push(newExpense);
-    }
-
-    let newPendingBills;
-    if (updatedTransactions.length === 0) {
-      newPendingBills = pendingBills.filter(b => b.id !== billId);
-    } else {
-      newPendingBills = pendingBills.map(b => b.id === billId ? { ...b, transactions: updatedTransactions } : b);
-    }
-
-    await saveExpenses(newExpenses);
-    await savePendingBills(newPendingBills);
-    toast({ title: "Transaction Settled", description: `${billToUpdate.name}'s transaction has been settled and recorded.` });
-  };
 
 
   const now = new Date();
@@ -762,7 +248,10 @@ export default function ExpensesTracker({
           <TableBody>
             {data.map(expense => (
               <TableRow key={expense.id}>
-                <TableCell>{format(new Date(expense.date), 'PPP')}</TableCell>
+                <TableCell>{(() => {
+                  const dateObj = new Date(expense.date);
+                  return isValid(dateObj) ? format(dateObj, 'PPP') : 'N/A';
+                })()}</TableCell>
                 <TableCell>{expense.category}</TableCell>
                 <TableCell>{expense.description}</TableCell>
                 <TableCell className="text-right font-mono">{currency}{expense.amount.toFixed(2)}</TableCell>
@@ -780,34 +269,7 @@ export default function ExpensesTracker({
 
   return (
     <div className="p-4 space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PendingBillsCard
-          key="customer-bills"
-          title="To Collect from Customers"
-          icon={HandCoins}
-          bills={pendingBills.filter(b => b.type === 'customer')}
-          type="customer"
-          onAddTransaction={handleAddPendingTransaction}
-          onClearAll={handleClearAllPendingBillsForPerson}
-          onSettleTransaction={handleSettleTransaction}
-          totalLimit={customerCreditLimit}
-          allNames={customers.map(c => c.name)}
-          currency={currency}
-        />
-        <PendingBillsCard
-          key="vendor-bills"
-          title="To Pay to Vendors"
-          icon={Landmark}
-          bills={pendingBills.filter(b => b.type === 'vendor')}
-          type="vendor"
-          onAddTransaction={handleAddPendingTransaction}
-          onClearAll={handleClearAllPendingBillsForPerson}
-          onSettleTransaction={handleSettleTransaction}
-          totalLimit={vendorCreditLimit}
-          allNames={vendors.map(v => v.name)}
-          currency={currency}
-        />
-      </div>
+
 
       <Separator />
 
@@ -819,7 +281,6 @@ export default function ExpensesTracker({
               <CardDescription>Record a new business expense.</CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => openAddVendorDialog(null)} variant="default"><Building className="mr-2 h-4 w-4" /> Add Vendor</Button>
               <Button variant="default" onClick={() => setIsVendorManageDialogOpen(true)}><List className="mr-2 h-4 w-4" /> Vendors List</Button>
             </div>
           </div>
@@ -840,13 +301,61 @@ export default function ExpensesTracker({
             </div>
             <div className="space-y-2">
               <Label htmlFor="vendor">Vendor</Label>
-              <Select onValueChange={(value) => setVendorId(value === 'none' ? undefined : value)} value={vendorId || 'none'}>
-                <SelectTrigger id="vendor"><SelectValue placeholder="None" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Popover open={vendorSelectOpen} onOpenChange={setVendorSelectOpen}>
+                <PopoverTrigger asChild>
+                  <div className="relative w-full">
+                    <Input
+                      placeholder={t('Search vendor...')}
+                      value={vendorId && vendorSearchTerm === '' ? vendors.find(v => v.id === vendorId)?.name : vendorSearchTerm}
+                      onChange={(e) => {
+                        setVendorSearchTerm(e.target.value);
+                        if (!vendorSelectOpen) setVendorSelectOpen(true);
+                        if (vendorId) setVendorId(undefined);
+                      }}
+                      onClick={() => setVendorSelectOpen(true)}
+                      className={cn(!vendorId && "text-muted-foreground")}
+                    />
+                    <ChevronsUpDown className="absolute right-2 top-2.5 h-4 w-4 opacity-50 pointer-events-none" />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                  <div className="max-h-[200px] overflow-y-auto p-1">
+                    <div
+                      className={cn("relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground cursor-pointer", !vendorId && "bg-accent text-accent-foreground")}
+                      onClick={() => {
+                        setVendorId(undefined);
+                        setVendorSearchTerm('');
+                        setVendorSelectOpen(false);
+                      }}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", !vendorId ? "opacity-100" : "opacity-0")} />
+                      None
+                    </div>
+                    {vendors.filter(v => v.name.toLowerCase().includes(vendorSearchTerm.toLowerCase())).map((v) => (
+                      <div
+                        key={v.id}
+                        className={cn("relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground cursor-pointer", vendorId === v.id && "bg-accent text-accent-foreground")}
+                        onClick={() => {
+                          setVendorId(v.id);
+                          setVendorSearchTerm('');
+                          setVendorSelectOpen(false);
+                        }}
+                      >
+                        <Check className={cn("mr-2 h-4 w-4", vendorId === v.id ? "opacity-100" : "opacity-0")} />
+                        {v.name}
+                      </div>
+                    ))}
+                    {vendors.filter(v => v.name.toLowerCase().includes(vendorSearchTerm.toLowerCase())).length === 0 && (
+                      <div className="text-sm text-muted-foreground p-2 text-center">No vendor found</div>
+                    )}
+                  </div>
+                  <div className="p-2 border-t">
+                    <Button size="sm" variant="secondary" className="w-full h-8" onClick={() => { setVendorSelectOpen(false); openAddVendorDialog(null); }}>
+                      <PlusCircle className="mr-2 h-3 w-3" /> New Vendor
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label>Vendor Category</Label>
@@ -899,7 +408,10 @@ export default function ExpensesTracker({
                     const vendor = getVendorDetails(expense.vendorId);
                     return (
                       <TableRow key={expense.id} className={cn(index % 2 === 0 ? 'bg-muted/50' : 'bg-background')}>
-                        <TableCell>{format(new Date(expense.date), 'PPP')}</TableCell>
+                        <TableCell>{(() => {
+                          const dateObj = new Date(expense.date);
+                          return isValid(dateObj) ? format(dateObj, 'PPP') : 'N/A';
+                        })()}</TableCell>
                         <TableCell>{expense.category}</TableCell>
                         <TableCell>{expense.description}</TableCell>
                         <TableCell>{vendor?.name || 'N/A'}</TableCell>
@@ -953,7 +465,7 @@ export default function ExpensesTracker({
       </Card>
 
       <AddOrEditVendorDialog open={isVendorAddDialogOpen} onOpenChange={setIsVendorAddDialogOpen} onSave={handleSaveVendor} existingVendor={editingVendor} />
-      <ManageVendorsDialog open={isVendorManageDialogOpen} onOpenChange={setIsVendorManageDialogOpen} vendors={vendors} onEditVendor={(v) => { setIsVendorManageDialogOpen(false); setTimeout(() => openAddVendorDialog(v), 150) }} onDeleteVendor={handleDeleteVendor} />
+      <ManageVendorsDialog open={isVendorManageDialogOpen} onOpenChange={setIsVendorManageDialogOpen} vendors={vendors} onEditVendor={(v) => { setIsVendorManageDialogOpen(false); setTimeout(() => openAddVendorDialog(v), 150) }} onDeleteVendor={handleDeleteVendor} onAddVendor={() => { setIsVendorManageDialogOpen(false); setTimeout(() => openAddVendorDialog(null), 150); }} />
 
       <Dialog open={isExpenseDetailOpen} onOpenChange={setIsExpenseDetailOpen}>
         <DialogContent className="max-w-2xl">
@@ -968,21 +480,7 @@ export default function ExpensesTracker({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog open={isLimitExceededDialogOpen} onOpenChange={setIsLimitExceededDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><AlertTriangle className="text-destructive" />Credit Limit Exceeded</DialogTitle>
-            <DialogDescription>
-              Adding this amount would exceed the total {limitExceededInfo.type} credit limit of <span className="font-bold">Rs.{limitExceededInfo.limit.toLocaleString()}</span>.
-              <br /><br />
-              Please enter a lower amount or go to the <strong>Admin &gt; Financial Settings</strong> to adjust the credit limit.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setIsLimitExceededDialogOpen(false)}>OK</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 }

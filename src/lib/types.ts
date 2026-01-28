@@ -67,6 +67,8 @@ export interface CustomerDetails {
   street?: string;
   landmark?: string;
   email?: string;
+  deliveryBoyId?: string;
+  deliveryBoyName?: string;
 }
 
 export interface Customer {
@@ -123,6 +125,18 @@ export interface Employee {
   mobile?: string;
   govtId?: string;
   email?: string;
+  allowedTabs?: string[];
+  password?: string;
+}
+
+export interface AdminRequest {
+  id: string;
+  type: 'stock_unlock' | 'admin_unlock';
+  itemId: string;
+  itemName: string;
+  requestedBy: string;
+  status: 'pending' | 'approved' | 'rejected';
+  timestamp: Date;
 }
 
 export interface Advance {
@@ -148,6 +162,8 @@ export interface Vendor {
   category: string;
   phone?: string;
   email?: string;
+  location?: string;
+  nextPaymentDate?: Date;
 }
 
 export interface Expense {
@@ -166,6 +182,8 @@ export interface InventoryItem {
   stock: number;
   capacity: number;
   unit: string;
+  vendorId?: string;
+  costPrice?: number;
 }
 
 export interface ActivityLogEntry {
@@ -337,4 +355,22 @@ export interface SetupData {
   vendors?: Partial<Vendor>[];
   currency: string;
   language: string;
+}
+
+export interface DraftItem {
+  inventoryItemId: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  price?: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  date: Date;
+  status: 'sent' | 'received';
+  items: DraftItem[];
+  totalAmount?: number;
 }

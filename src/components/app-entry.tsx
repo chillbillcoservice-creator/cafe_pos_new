@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { MenuCategory, InventoryItem, Employee, Bill, Expense, Customer, Vendor, PendingBill, KOTPreference, Attendance, Advance, EventBooking, VenueDetails, OwnerDetails, SetupData } from "@/lib/types";
+import type { MenuCategory, InventoryItem, Employee, Bill, Expense, Customer, Vendor, PendingBill, KOTPreference, Attendance, Advance, EventBooking, VenueDetails, OwnerDetails, SetupData, PurchaseOrder, DraftItem, AdminRequest } from "@/lib/types";
 import MainLayout from "./main-layout";
 import SetupWizard from "./setup-wizard";
 import { useState, useEffect } from "react";
@@ -91,11 +91,15 @@ export default function AppEntry({
   const [attendance, setAttendance] = useLocalStorageState<Attendance[]>('attendance', initialAttendance);
   const [advances, setAdvances] = useLocalStorageState<Advance[]>('advances', initialAdvances);
   const [eventBookings, setEventBookings] = useLocalStorageState<EventBooking[]>('eventBookings', []);
+  const [purchaseOrders, setPurchaseOrders] = useLocalStorageState<PurchaseOrder[]>('purchaseOrders', []);
+  const [draftItems, setDraftItems] = useLocalStorageState<DraftItem[]>('draftItems', []);
+  const [adminRequests, setAdminRequests] = useLocalStorageState<AdminRequest[]>('adminRequests', []);
+  const [unlockedItems, setUnlockedItems] = useLocalStorageState<string[]>('unlockedItems', []);
 
   // New state for currency and setup status
   const [currency, setCurrency] = useLocalStorageState<string>('currency', 'Rs.');
   const [language, setLanguage] = useLocalStorageState<string>('language', 'en');
-  const [isSetupComplete, setIsSetupComplete] = useLocalStorageState<boolean>('isSetupComplete', false);
+  const [isSetupComplete, setIsSetupComplete] = useState<boolean>(false);
   const [venueDetails, setVenueDetails] = useLocalStorageState<VenueDetails | null>('venueDetails', null);
   const [ownerDetails, setOwnerDetails] = useLocalStorageState<OwnerDetails | null>('ownerDetails', null);
 
@@ -194,7 +198,6 @@ export default function AppEntry({
       </LanguageProvider>
     );
   }
-
   return (
     <LanguageProvider key={language} initialLanguage={language}>
       <MainLayout
@@ -212,6 +215,8 @@ export default function AppEntry({
         initialAdvances={advances}
         initialEventBookings={eventBookings}
         initialCurrency={currency || 'Rs.'}
+        initialPurchaseOrders={purchaseOrders}
+        initialDraftItems={draftItems}
         setMenu={setMenu}
         setInventory={setInventory}
         setEmployees={setEmployees}
@@ -225,11 +230,17 @@ export default function AppEntry({
         setVenueName={setVenueName}
         setKotPreference={setKotPreference}
         setEventBookings={setEventBookings}
-        setCurrency={setCurrency} // Pass setter
+        setCurrency={setCurrency}
         setLanguage={setLanguage}
         initialLanguage={language}
         venueDetails={venueDetails}
         ownerDetails={ownerDetails}
+        setPurchaseOrders={setPurchaseOrders}
+        setDraftItems={setDraftItems}
+        adminRequests={adminRequests}
+        setAdminRequests={setAdminRequests}
+        unlockedItems={unlockedItems}
+        setUnlockedItems={setUnlockedItems}
       />
     </LanguageProvider>
   );

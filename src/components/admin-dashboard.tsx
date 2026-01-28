@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '@/contexts/language-context';
-import { BarChart, Book, Download, TrendingUp, Settings, Package, User, ShoppingCart, History, Mail, Receipt, Edit, Trash2, Building, Users, CreditCard, PlusCircle, Eye, Repeat, Printer } from 'lucide-react';
+import { BarChart, Book, Download, TrendingUp, Settings, Package, User, ShoppingCart, History, Mail, Receipt, Edit, Trash2, Building, Users, CreditCard, PlusCircle, Eye, Repeat, Printer, Check, X, Shield, UserCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import SalesReport from './sales-report';
 import InventoryManagement from './inventory-management';
 import BillHistory from './bill-history';
-import type { Bill, Employee, OrderItem, Expense, Vendor, InventoryItem, KOTPreference, MenuCategory } from '@/lib/types';
+import type { Bill, Employee, OrderItem, Expense, Vendor, InventoryItem, KOTPreference, MenuCategory, PurchaseOrder, DraftItem, PendingBill, AdminRequest } from '@/lib/types';
+import { Lock, Unlock } from 'lucide-react';
 import { generateAndSendReport } from '@/ai/flows/generate-report';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
@@ -40,6 +41,7 @@ interface AdminDashboardProps {
   employees: Employee[];
   setEmployees: (employees: Employee[]) => void;
   expenses: Expense[];
+  setExpenses: (expenses: Expense[]) => void;
   inventory: InventoryItem[];
   setInventory: (inventory: InventoryItem[]) => void;
   customerCreditLimit: number;
@@ -54,6 +56,21 @@ interface AdminDashboardProps {
   setVenueName: (name: string) => void;
   currency: string;
   setCurrency: (currency: string) => void;
+
+  vendors: Vendor[];
+  setVendors: (vendors: Vendor[]) => void;
+  purchaseOrders: PurchaseOrder[];
+  setPurchaseOrders: (orders: PurchaseOrder[]) => void;
+  draftItems: DraftItem[];
+  setDraftItems: (items: DraftItem[]) => void;
+  pendingBills: PendingBill[];
+  setPendingBills: (bills: PendingBill[]) => void;
+  currentUser?: Employee | null;
+  adminRequests?: AdminRequest[];
+  setAdminRequests?: React.Dispatch<React.SetStateAction<AdminRequest[]>>;
+  unlockedItems?: string[];
+  setUnlockedItems?: React.Dispatch<React.SetStateAction<string[]>>;
+  onSwitchProfile?: () => void;
 }
 
 export default function AdminDashboard({
@@ -61,6 +78,7 @@ export default function AdminDashboard({
   employees = [],
   setEmployees,
   expenses = [],
+  setExpenses,
   inventory = [],
   setInventory,
   customerCreditLimit,
@@ -75,6 +93,20 @@ export default function AdminDashboard({
   setVenueName,
   currency = 'Rs.',
   setCurrency,
+  vendors,
+  setVendors,
+  purchaseOrders,
+  setPurchaseOrders,
+  draftItems,
+  setDraftItems,
+  pendingBills,
+  setPendingBills,
+  currentUser,
+  adminRequests,
+  setAdminRequests,
+  unlockedItems = [],
+  setUnlockedItems,
+  onSwitchProfile,
 }: AdminDashboardProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -84,7 +116,7 @@ export default function AdminDashboard({
   const [autoSendMonthly, setAutoSendMonthly] = useState(false);
   const [reportType, setReportType] = useState<'daily' | 'monthly' | 'yearly'>('daily');
 
-  const [vendors, setVendors] = useState<Vendor[]>([]);
+
 
   const [isStaffManagerOpen, setIsStaffManagerOpen] = useState(false);
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
@@ -96,6 +128,46 @@ export default function AdminDashboard({
   const [summaryDetailContent, setSummaryDetailContent] = useState<React.ReactNode>(null);
 
   const menuCategories = useMemo(() => menu.map(cat => cat.name), [menu]);
+
+  const isLocked = (key: string) => {
+    if (currentUser?.role === 'Admin') return false;
+    return !unlockedItems.includes(key);
+  };
+
+  const handleUnlockRequest = (key: string, name: string) => {
+    if (!setAdminRequests) return;
+    const newRequest: AdminRequest = {
+      id: `AR-${Date.now()}`,
+      type: 'admin_unlock',
+      itemId: key,
+      itemName: name,
+      requestedBy: currentUser?.name || 'Unknown',
+      status: 'pending',
+      timestamp: new Date()
+    };
+    setAdminRequests(prev => [...prev, newRequest]);
+    toast({ title: "Request Sent", description: `Permission requested to unlock ${name}.` });
+  };
+
+  const pendingRequests = useMemo(() => adminRequests?.filter(r => r.status === 'pending') || [], [adminRequests]);
+
+  const handleApproveRequest = (request: AdminRequest) => {
+    if (!setAdminRequests || !setUnlockedItems) return;
+
+    // Update request status
+    setAdminRequests(prev => prev.map(r => r.id === request.id ? { ...r, status: 'approved' } : r));
+
+    // Unlock the item
+    setUnlockedItems(prev => [...prev, request.itemId]);
+
+    toast({ title: "Approved", description: `Request for ${request.itemName} approved.` });
+  };
+
+  const handleRejectRequest = (request: AdminRequest) => {
+    if (!setAdminRequests) return;
+    setAdminRequests(prev => prev.map(r => r.id === request.id ? { ...r, status: 'rejected' } : r));
+    toast({ title: "Rejected", description: "Request rejected." });
+  };
 
   useEffect(() => {
     // This could be updated to fetch from a local file if vendors are also moved
@@ -377,7 +449,61 @@ export default function AdminDashboard({
         </Card>
       </div>
 
+      {currentUser?.role !== 'Admin' && (
+        <Card className="bg-primary/5 border-primary/20 shadow-lg border-dashed">
+          <CardContent className="flex flex-col md:flex-row items-center justify-between p-6 gap-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-full text-primary">
+                <Shield className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">{t('Admin Access Required')}</CardTitle>
+                <CardDescription>{t('You are currently viewing as a Manager. Switch to an Admin profile to access all features.')}</CardDescription>
+              </div>
+            </div>
+            <Button onClick={onSwitchProfile} size="lg" className="shrink-0 gap-2">
+              <UserCircle className="h-5 w-5" />
+              {t('Sign In as Admin')}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-3">
+
+        {currentUser?.role === 'Admin' && pendingRequests.length > 0 && (
+          <Card className="lg:col-span-3 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-medium flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                <Users className="h-5 w-5" /> Pending Approvals ({pendingRequests.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {pendingRequests.map(request => (
+                  <div key={request.id} className="flex justify-between items-center p-3 bg-background rounded-lg border shadow-sm">
+                    <div>
+                      <p className="font-medium text-sm">{request.itemName}</p>
+                      <p className="text-xs text-muted-foreground">Requested by {request.requestedBy}</p>
+                      <p className="text-xs text-muted-foreground">{format(new Date(request.timestamp), 'PP p')}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleRejectRequest(request)}>
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Reject</span>
+                      </Button>
+                      <Button size="sm" variant="outline" className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50" onClick={() => handleApproveRequest(request)}>
+                        <Check className="h-4 w-4" />
+                        <span className="sr-only">Approve</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Left Column */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
@@ -410,81 +536,89 @@ export default function AdminDashboard({
               </Dialog>
               <Dialog open={isStaffManagerOpen} onOpenChange={setIsStaffManagerOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" size="lg" className="h-20 text-base flex-col gap-2">
+                  <Button variant="outline" size="lg" className="h-20 text-base flex-col gap-2 relative" onClick={(e) => {
+                    if (isLocked('manage_staff')) {
+                      e.preventDefault();
+                      handleUnlockRequest('manage_staff', 'Manage Staff');
+                    }
+                  }}>
+                    {isLocked('manage_staff') && <Lock className="absolute top-2 right-2 h-4 w-4 text-muted-foreground" />}
                     <Users className="h-6 w-6" />
                     <span>{t('Manage Staff')}</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl">
-                  <DialogHeader>
-                    <DialogTitle>{t('Staff Management')}</DialogTitle>
-                    <DialogDescription>{t('Add, edit, or remove staff members.')}</DialogDescription>
-                  </DialogHeader>
-                  <div className="mt-4">
-                    <Button onClick={() => { setEditingEmployee(null); setIsAddEmployeeDialogOpen(true); }}>
-                      <PlusCircle className="mr-2 h-4 w-4" /> {t('ADD NEW EMPLOYEE')}
-                    </Button>
-                  </div>
-                  <div className="max-h-[60vh] overflow-y-auto mt-4">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t('ID')}</TableHead>
-                          <TableHead>{t('Name')}</TableHead>
-                          <TableHead>{t('Role')}</TableHead>
-                          <TableHead>{t('Mobile')}</TableHead>
-                          <TableHead>{t('Govt ID')}</TableHead>
-                          <TableHead>{t('Salary')} ({currency})</TableHead>
-                          <TableHead className="text-right">{t('Actions')}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {employees.map((employee) => (
-                          <TableRow key={employee.id}>
-                            <TableCell className="font-mono text-xs text-muted-foreground">{employee.id}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <span className={cn('h-2 w-2 rounded-full', employee.color)} />
-                                {employee.name}
-                              </div>
-                            </TableCell>
-                            <TableCell>{employee.role}</TableCell>
-                            <TableCell>{employee.mobile || 'N/A'}</TableCell>
-                            <TableCell>{employee.govtId || 'N/A'}</TableCell>
-                            <TableCell>{employee.salary.toLocaleString()}</TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="ghost" size="icon" onClick={() => openEditEmployeeDialog(employee)}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="text-destructive">
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>{t('Are you sure?')}</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      {t('This action cannot be undone. This will permanently delete')} {employee.name}{t("'s record.")}
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDeleteEmployee(employee.id)}>Delete</AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </TableCell>
+                {!isLocked('manage_staff') && (
+                  <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                      <DialogTitle>{t('Staff Management')}</DialogTitle>
+                      <DialogDescription>{t('Add, edit, or remove staff members.')}</DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-4">
+                      <Button onClick={() => { setEditingEmployee(null); setIsAddEmployeeDialogOpen(true); }}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> {t('ADD NEW EMPLOYEE')}
+                      </Button>
+                    </div>
+                    <div className="max-h-[60vh] overflow-y-auto mt-4">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>{t('ID')}</TableHead>
+                            <TableHead>{t('Name')}</TableHead>
+                            <TableHead>{t('Role')}</TableHead>
+                            <TableHead>{t('Mobile')}</TableHead>
+                            <TableHead>{t('Govt ID')}</TableHead>
+                            <TableHead>{t('Salary')} ({currency})</TableHead>
+                            <TableHead className="text-right">{t('Actions')}</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </DialogContent>
+                        </TableHeader>
+                        <TableBody>
+                          {employees.map((employee) => (
+                            <TableRow key={employee.id}>
+                              <TableCell className="font-mono text-xs text-muted-foreground">{employee.id}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <span className={cn('h-2 w-2 rounded-full', employee.color)} />
+                                  {employee.name}
+                                </div>
+                              </TableCell>
+                              <TableCell>{employee.role}</TableCell>
+                              <TableCell>{employee.mobile || 'N/A'}</TableCell>
+                              <TableCell>{employee.govtId || 'N/A'}</TableCell>
+                              <TableCell>{employee.salary.toLocaleString()}</TableCell>
+                              <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => openEditEmployeeDialog(employee)}>
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-destructive">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>{t('Are you sure?')}</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        {t('This action cannot be undone. This will permanently delete')} {employee.name}{t("'s record.")}
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDeleteEmployee(employee.id)}>Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </DialogContent>
+                )}
               </Dialog>
               <Dialog>
                 <DialogTrigger asChild>
@@ -497,7 +631,23 @@ export default function AdminDashboard({
                   <DialogHeader>
                     <DialogTitle>{t('Inventory Management')}</DialogTitle>
                   </DialogHeader>
-                  <InventoryManagement inventory={inventory} menu={menu} setMenu={() => { }} setInventory={setInventory} />
+                  <InventoryManagement
+                    inventory={inventory}
+                    menu={menu}
+                    setMenu={() => { }}
+                    setInventory={setInventory}
+                    vendors={vendors}
+                    setVendors={setVendors}
+                    purchaseOrders={purchaseOrders}
+                    setPurchaseOrders={setPurchaseOrders}
+                    draftItems={draftItems}
+                    setDraftItems={setDraftItems}
+                    expenses={expenses}
+                    setExpenses={setExpenses}
+                    pendingBills={pendingBills}
+                    setPendingBills={setPendingBills}
+                    currency={currency}
+                  />
                 </DialogContent>
               </Dialog>
               <Button variant="outline" size="lg" className="h-20 text-base flex-col gap-2" onClick={handleExportCSV}>
@@ -590,23 +740,40 @@ export default function AdminDashboard({
                 <CardTitle className="text-base flex items-center gap-2"><CreditCard /> {t('Financial Settings')}</CardTitle>
                 <div className="space-y-2">
                   <Label htmlFor="customer-limit">{t('Customer Credit Limit')} ({currency})</Label>
-                  <Input
-                    id="customer-limit"
-                    type="number"
-                    value={customerCreditLimit}
-                    onChange={(e) => setCustomerCreditLimit(Number(e.target.value))}
-                    placeholder="e.g., 10000"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="customer-limit"
+                      type="number"
+                      value={customerCreditLimit}
+                      onChange={(e) => setCustomerCreditLimit(Number(e.target.value))}
+                      placeholder="e.g., 10000"
+                      disabled={isLocked('financial_settings')}
+                      className="pr-10"
+                    />
+                    {isLocked('financial_settings') && (
+                      <Button variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 text-muted-foreground" onClick={() => handleUnlockRequest('financial_settings', 'Financial Settings')}>
+                        <Lock className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <Label htmlFor="vendor-limit">{t('Vendor Credit Limit')} ({currency})</Label>
-                  <Input
-                    id="vendor-limit"
-                    type="number"
-                    value={vendorCreditLimit}
-                    onChange={(e) => setVendorCreditLimit(Number(e.target.value))}
-                    placeholder="e.g., 50000"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="vendor-limit"
+                      type="number"
+                      value={vendorCreditLimit}
+                      onChange={(e) => setVendorCreditLimit(Number(e.target.value))}
+                      placeholder="e.g., 50000"
+                      disabled={isLocked('financial_settings')}
+                    />
+                    {isLocked('financial_settings') && (
+                      <Button variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 text-muted-foreground" onClick={() => handleUnlockRequest('financial_settings', 'Financial Settings')}>
+                        <Lock className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
               <Separator />
@@ -657,7 +824,7 @@ export default function AdminDashboard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 }
 

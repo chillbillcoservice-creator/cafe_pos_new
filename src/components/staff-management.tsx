@@ -35,7 +35,30 @@ const attendanceStatusConfig: Record<AttendanceStatus, { icon: React.ElementType
 };
 
 const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
-const defaultRoles = ["Manager", "Head Chef", "Chef", "Waiter", "Cleaner", "Helper", "Bar Tender"];
+const defaultRoles = ["Manager", "Head Chef", "Chef", "Waiter", "Cleaner", "Helper", "Bar Tender", "Delivery Boy"];
+
+const AVAILABLE_TABS = [
+  { id: 'pos', label: 'Main (POS)' },
+  { id: 'tables', label: 'Tables' },
+  { id: 'kitchen', label: 'Kitchen & Inventory' },
+  { id: 'expenses', label: 'Expenses' },
+  { id: 'vendors', label: 'Vendors' },
+  { id: 'customers', label: 'Customers & Bookings' },
+  { id: 'staff', label: 'Staff' },
+  { id: 'admin', label: 'Admin' },
+];
+
+const getDefaultTabsForRole = (role: string): string[] => {
+  switch (role) {
+    case 'Manager': return ['pos', 'tables', 'kitchen', 'expenses', 'vendors', 'customers', 'staff', 'admin'];
+    case 'Head Chef':
+    case 'Chef': return ['kitchen'];
+    case 'Waiter': return ['pos', 'tables'];
+    case 'Bar Tender': return ['pos', 'tables'];
+    case 'Delivery Boy': return ['pos'];
+    default: return [];
+  }
+};
 
 interface StaffManagementProps {
   employees: Employee[];
@@ -325,8 +348,8 @@ export default function StaffManagement({ employees, setEmployees, advances, set
     <div className="p-4 space-y-4">
       <Tabs defaultValue="attendance" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-muted p-1 h-auto rounded-lg">
-          <TabsTrigger value="attendance" className="py-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-md text-base font-bold uppercase">{t('ATTENDANCE & ADVANCE')}</TabsTrigger>
-          <TabsTrigger value="employees" className="py-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-md text-base font-bold uppercase">{t('EMPLOYEE DETAILS')}</TabsTrigger>
+          <TabsTrigger value="attendance" className="py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-base font-bold uppercase">{t('ATTENDANCE & ADVANCE')}</TabsTrigger>
+          <TabsTrigger value="employees" className="py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md text-base font-bold uppercase">{t('EMPLOYEE DETAILS')}</TabsTrigger>
         </TabsList>
         <TabsContent value="attendance">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
@@ -771,6 +794,7 @@ function EmployeeDialog({ open, onOpenChange, employee, onSave }: { open: boolea
   const [salary, setSalary] = useState('');
   const [mobile, setMobile] = useState('');
   const [govtId, setGovtId] = useState('');
+  const [allowedTabs, setAllowedTabs] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
@@ -789,8 +813,33 @@ function EmployeeDialog({ open, onOpenChange, employee, onSave }: { open: boolea
       setSalary(employee?.salary?.toString() || '');
       setMobile(employee?.mobile || '');
       setGovtId(employee?.govtId || '');
+
+      // Initialize allowed tabs: if editing, use existing; else default based on role or empty
+      if (employee?.allowedTabs) {
+        setAllowedTabs(employee.allowedTabs);
+      } else if (empRole) {
+        setAllowedTabs(getDefaultTabsForRole(empRole));
+      } else {
+        setAllowedTabs([]);
+      }
     }
   }, [open, employee]);
+
+  const handleRoleChange = (newRole: string) => {
+    setRole(newRole);
+    // Auto-update allowed tabs based on the new role, unless it's 'Other' (keep current or clear?)
+    // User expectation: "when u select a role , meaning giving how much access... to the selected role"
+    // So we should reset permissions to the role's default when role changes.
+    if (newRole !== 'Other') {
+      setAllowedTabs(getDefaultTabsForRole(newRole));
+    }
+  };
+
+  const handleToggleTab = (tabId: string) => {
+    setAllowedTabs(prev =>
+      prev.includes(tabId) ? prev.filter(id => id !== tabId) : [...prev, tabId]
+    );
+  };
 
   const handleSave = () => {
     const finalRole = role === 'Other' ? customRole : role;
@@ -804,6 +853,7 @@ function EmployeeDialog({ open, onOpenChange, employee, onSave }: { open: boolea
       salary: parseFloat(salary),
       mobile,
       govtId,
+      allowedTabs,
     };
     if (employee) {
       data.id = employee.id;
@@ -814,7 +864,7 @@ function EmployeeDialog({ open, onOpenChange, employee, onSave }: { open: boolea
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -831,7 +881,7 @@ function EmployeeDialog({ open, onOpenChange, employee, onSave }: { open: boolea
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">{t('Role')}</Label>
-              <Select value={role} onValueChange={setRole} required>
+              <Select value={role} onValueChange={handleRoleChange} required>
                 <SelectTrigger id="role">
                   <SelectValue placeholder={t('Select a role')} />
                 </SelectTrigger>
@@ -847,6 +897,25 @@ function EmployeeDialog({ open, onOpenChange, employee, onSave }: { open: boolea
                 <Input id="custom-role" placeholder={t('e.g., Dishwasher')} value={customRole} onChange={(e) => setCustomRole(e.target.value)} required />
               </div>
             )}
+
+            <div className="space-y-2 border p-3 rounded-md bg-muted/20">
+              <Label className="mb-2 block font-semibold">{t('Dashboard Access / Permissions')}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {AVAILABLE_TABS.map(tab => (
+                  <div key={tab.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`tab-${tab.id}`}
+                      checked={allowedTabs.includes(tab.id)}
+                      onCheckedChange={() => handleToggleTab(tab.id)}
+                    />
+                    <Label htmlFor={`tab-${tab.id}`} className="font-normal cursor-pointer text-sm">
+                      {t(tab.label)}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="salary">{t('Salary')}</Label>
               <Input id="salary" type="number" placeholder="e.g., 30000" value={salary} onChange={(e) => setSalary(e.target.value)} required />

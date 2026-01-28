@@ -5,10 +5,10 @@ import * as React from 'react';
 import { useLanguage } from '@/contexts/language-context';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Utensils, LayoutGrid, Soup, Users, Shield, Receipt, Package, PanelTop, PanelLeft, Users2, Menu as MenuIcon, HelpCircle, BellDot, Bookmark } from 'lucide-react';
-import { formatDistanceToNowStrict, isSameDay } from 'date-fns';
+import { Utensils, LayoutGrid, Soup, Users, Shield, Receipt, Package, PanelTop, PanelLeft, Users2, Menu as MenuIcon, HelpCircle, BellDot, Bookmark, Landmark, LogOut, UserCircle, User } from 'lucide-react';
+import { formatDistanceToNowStrict, isSameDay, differenceInCalendarDays, format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import type { Table, TableStatus, Order, Bill, Employee, OrderItem, Expense, InventoryItem, KOTPreference, OrderType, MenuCategory, CustomerOrder, Vendor, PendingBill, Customer, Attendance, Advance, EventBooking } from '@/lib/types';
+import type { Table, TableStatus, Order, Bill, Employee, OrderItem, Expense, InventoryItem, KOTPreference, OrderType, MenuCategory, CustomerOrder, Vendor, PendingBill, Customer, Attendance, Advance, EventBooking, PurchaseOrder, DraftItem, AdminRequest } from '@/lib/types';
 import { Logo } from "./icons";
 import PosSystem from './pos-system';
 import TableManagement from './table-management';
@@ -18,6 +18,7 @@ import StaffManagement from "./staff-management";
 import ExpensesTracker from './expenses-tracker';
 import InventoryManagement from './inventory-management';
 import CustomerManagement from './customer-management';
+import VendorManagement from './vendor-management';
 import { Separator } from '@/components/ui/separator';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -27,12 +28,16 @@ import { cn } from '@/lib/utils';
 import SetupWizard from './setup-wizard';
 import { ThemeToggle } from './theme-toggle';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { HelpDialog } from './help-dialog';
+import { ThemeColorPicker } from './theme-color-picker';
 import IncomingOrdersDialog from './incoming-orders-dialog';
+import StaffLogin from './staff-login';
 import { useFirestore } from '@/firebase';
 import { collection, onSnapshot, writeBatch, doc, setDoc } from 'firebase/firestore';
 import { groupItemsForKOT } from '@/lib/kot-utils';
 import type { VenueDetails, OwnerDetails } from "@/lib/types";
+import { COUNTRY_TIMEZONES } from '@/lib/timezones';
 
 const PENDING_ORDER_KEY = -1;
 
@@ -72,6 +77,14 @@ interface MainLayoutProps {
   ownerDetails?: OwnerDetails | null;
   initialLanguage: string;
   setLanguage: (lang: string) => void;
+  initialPurchaseOrders: PurchaseOrder[];
+  setPurchaseOrders: React.Dispatch<React.SetStateAction<PurchaseOrder[]>>;
+  initialDraftItems: DraftItem[];
+  setDraftItems: React.Dispatch<React.SetStateAction<DraftItem[]>>;
+  adminRequests: AdminRequest[];
+  setAdminRequests: React.Dispatch<React.SetStateAction<AdminRequest[]>>;
+  unlockedItems: string[];
+  setUnlockedItems: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export default function MainLayout({
@@ -106,12 +119,21 @@ export default function MainLayout({
   venueDetails,
   ownerDetails,
   initialLanguage,
-  setLanguage
+  setLanguage,
+  initialPurchaseOrders,
+  setPurchaseOrders,
+  initialDraftItems,
+  setDraftItems,
+  adminRequests,
+  setAdminRequests,
+  unlockedItems,
+  setUnlockedItems
 }: MainLayoutProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
   const db = useFirestore(); // Still needed for QR code orders listener
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
+  const [venueCountry, setVenueCountry] = useState<string>(venueDetails?.country || 'India');
   const [tables, setTables] = useState<Table[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
 
@@ -131,6 +153,39 @@ export default function MainLayout({
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [customerOrders, setCustomerOrders] = useState<CustomerOrder[]>([]);
   const [isIncomingOrderDialogOpen, setIsIncomingOrderDialogOpen] = useState(false);
+  const [isStaffLoginOpen, setIsStaffLoginOpen] = useState(false);
+
+  const [currentUser, setCurrentUser] = useState<Employee | null>(null);
+
+  useEffect(() => {
+    try {
+      const savedUserId = localStorage.getItem('currentUserId');
+      if (savedUserId && initialEmployees.length > 0) {
+        const user = initialEmployees.find(e => e.id === savedUserId);
+        if (user) setCurrentUser(user);
+      }
+    } catch (e) {
+      console.error("Error loading user", e);
+    }
+  }, [initialEmployees]);
+
+  const handleLogin = (user: Employee) => {
+    setCurrentUser(user);
+    localStorage.setItem('currentUserId', user.id);
+    if (user.allowedTabs && user.allowedTabs.length > 0) {
+      // If current active tab is not allowed, switch to the first allowed one
+      if (!user.allowedTabs.includes(activeTab) && !user.allowedTabs.includes('pos')) {
+        setActiveTab(user.allowedTabs[0]);
+      } else if (user.allowedTabs.includes('pos')) {
+        setActiveTab('pos');
+      }
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('currentUserId');
+  };
 
   useEffect(() => {
     if (!db) return;
@@ -152,10 +207,37 @@ export default function MainLayout({
         setIsIncomingOrderDialogOpen(true);
       }
       setCustomerOrders(newOrders);
+    }, (error) => {
+      console.warn("Firestore customerOrders listener error:", error);
     });
 
     return () => unsub();
   }, [db, customerOrders.length, toast]);
+
+  // Reminder Check for Vendor Payments
+  useEffect(() => {
+    if (!initialVendors) return;
+    initialVendors.forEach(vendor => {
+      if (!vendor.nextPaymentDate) return;
+      const today = new Date();
+      const paymentDate = new Date(vendor.nextPaymentDate);
+      const diffDays = differenceInCalendarDays(paymentDate, today);
+
+      if (diffDays === 7) {
+        toast({
+          title: t("Vendor Payment Reminder"),
+          description: `${t('Payment to')} ${vendor.name} ${t('is due in 1 week')} (${format(paymentDate, 'MM/dd')}).`,
+        });
+      }
+      if (diffDays === 1) {
+        toast({
+          title: t("Vendor Payment Reminder"),
+          description: `${t('Payment to')} ${vendor.name} ${t('is due tomorrow')}!`,
+          variant: 'destructive',
+        });
+      }
+    });
+  }, [initialVendors, toast, t]);
 
   // Sync settings to Firestore whenever they change locally
   useEffect(() => {
@@ -370,16 +452,19 @@ export default function MainLayout({
   }, []);
 
   const formattedDate = currentDateTime
-    ? currentDateTime.toLocaleDateString(undefined, {
+    ? currentDateTime.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      timeZone: COUNTRY_TIMEZONES[venueCountry]
     })
     : '';
 
   const formattedTime = currentDateTime
-    ? currentDateTime.toLocaleTimeString()
+    ? currentDateTime.toLocaleTimeString('en-US', {
+      timeZone: COUNTRY_TIMEZONES[venueCountry]
+    })
     : '';
 
   const updateTableStatus = useCallback((tableIds: number[], status: TableStatus, reservationDetails?: Table['reservationDetails']) => {
@@ -493,10 +578,10 @@ export default function MainLayout({
       setOrders(prev => prev.map(o => o.id === existingOrderForTable.id ? finalOrderState : o));
     } else {
       const allIds = [
-        ...orders.map(o => parseInt(o.id)).filter(id => !isNaN(id)),
-        ...initialBills.map(b => parseInt(b.id)).filter(id => !isNaN(id)),
+        ...orders.map(o => parseInt(o.id, 10)).filter(id => !isNaN(id) && id < 1000000),
+        ...initialBills.map(b => parseInt(b.id, 10)).filter(id => !isNaN(id) && id < 1000000),
       ];
-      const maxId = Math.max(0, ...allIds);
+      const maxId = allIds.length > 0 ? Math.max(0, ...allIds) : 0;
       const newId = (maxId + 1).toString();
 
       finalOrderState = {
@@ -532,6 +617,7 @@ export default function MainLayout({
     try {
       localStorage.setItem('setupComplete', 'true');
       setVenueName(data.venue.name);
+      setVenueCountry(data.venue.country || 'India');
       setEmployees(prev => [...(data.employees || [])]); // Append or replace? Setup usually replaces or initializes. Let's merge if needed, but for "Re-run" let's be careful. Actually, SetupWizard returns employees.
       // Better to check if we should overwrite. For now, let's update state.
       // But critical: Currency
@@ -577,15 +663,35 @@ export default function MainLayout({
     return <SetupWizard onComplete={handleSetupComplete} />;
   }
 
-  const navItems = [
+  // User Selection / Login Screen
+  if (!currentUser && initialEmployees.length > 0) {
+    return (
+      <StaffLogin
+        isOpen={true}
+        onOpenChange={() => { }}
+        employees={initialEmployees}
+        onLogin={handleLogin}
+        isForced={true}
+      />
+    );
+  }
+
+  const allNavItems = [
     { value: 'pos', label: t('Main'), icon: Utensils },
     { value: 'tables', label: t('Tables'), icon: LayoutGrid },
     { value: 'kitchen', label: t('Kitchen & Inventory'), icon: Soup },
+    { value: 'vendors', label: t('Vendors'), icon: Landmark },
     { value: 'expenses', label: t('Expenses'), icon: Receipt },
     { value: 'customers', label: t('Customers & Bookings'), icon: Users2 },
     { value: 'staff', label: t('Staff'), icon: Users },
     { value: 'admin', label: t('Admin'), icon: Shield },
   ];
+
+  const navItems = allNavItems.filter(item => {
+    if (!currentUser) return true; // Should be handled by login screen, but for safety
+    if (!currentUser.allowedTabs || currentUser.allowedTabs.length === 0) return true; // Legacy support: Full access if no permissions defined
+    return currentUser.allowedTabs.includes(item.value);
+  });
   const renderNav = (isSheet = false) => (
     <TabsList className={cn(
       "m-2 p-0 h-auto bg-transparent",
@@ -609,7 +715,7 @@ export default function MainLayout({
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <header className="flex items-center justify-between h-16 px-4 md:px-6 border-b shrink-0">
+      <header className="flex items-center justify-between h-16 px-4 md:px-6 border-b shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex items-center gap-2 font-semibold">
           <Sheet open={isMobileSheetOpen} onOpenChange={setIsMobileSheetOpen}>
             <SheetTrigger asChild>
@@ -639,6 +745,7 @@ export default function MainLayout({
             </Button>
           )}
           <ThemeToggle />
+          <ThemeColorPicker />
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -661,10 +768,36 @@ export default function MainLayout({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <div className="text-sm text-foreground text-center font-semibold bg-muted p-2 rounded-lg shadow-inner">
+          <div className="text-sm text-foreground text-center font-semibold bg-muted p-2 rounded-lg shadow-inner flex flex-col items-center min-w-[100px]">
             <div className="hidden sm:block">{formattedDate}</div>
             <div>{formattedTime}</div>
           </div>
+          {currentUser && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="pl-2 pr-4 gap-2 h-10 rounded-full border bg-muted/40 hover:bg-muted">
+                  <div className={cn("h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold text-white", currentUser.color)}>
+                    {currentUser.name.charAt(0)}
+                  </div>
+                  <div className="flex flex-col items-start text-xs">
+                    <span className="font-semibold">{currentUser.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{currentUser.role}</span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="cursor-pointer" onClick={() => setIsStaffLoginOpen(true)}>
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  {t('Switch Profile')}
+                </DropdownMenuItem>
+                <Separator className="my-1" />
+                <DropdownMenuItem className="text-destructive cursor-pointer" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {t('Logout')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </header>
       <DndProvider backend={HTML5Backend}>
@@ -680,6 +813,7 @@ export default function MainLayout({
                 tables={tables}
                 orders={orders}
                 setOrders={setOrders}
+                employees={initialEmployees}
                 updateTableStatus={updateTableStatus}
                 occupancyCount={occupancyCount}
                 activeOrder={activeOrder}
@@ -762,6 +896,31 @@ export default function MainLayout({
                     setInventory={setInventory}
                     menu={initialMenu}
                     setMenu={setMenu}
+                    vendors={initialVendors}
+                    setVendors={setVendors}
+                    purchaseOrders={initialPurchaseOrders}
+                    setPurchaseOrders={setPurchaseOrders}
+                    draftItems={initialDraftItems}
+                    setDraftItems={setDraftItems}
+                    expenses={initialExpenses}
+                    setExpenses={setExpenses}
+                    pendingBills={initialPendingBills}
+                    setPendingBills={setPendingBills}
+                    currency={initialCurrency}
+                    onStockRequest={(itemId, itemName) => {
+                      const newRequest: AdminRequest = {
+                        id: `AR-${Date.now()}`,
+                        type: 'stock_unlock',
+                        itemId,
+                        itemName,
+                        requestedBy: currentUser?.name || 'Unknown', // Using logged in user
+                        status: 'pending',
+                        timestamp: new Date()
+                      };
+                      setAdminRequests(prev => [...prev, newRequest]);
+                    }}
+                    unlockedItems={unlockedItems}
+                    currentUser={currentUser}
                   />
                 </div>
               </div>
@@ -773,9 +932,29 @@ export default function MainLayout({
                 customers={initialCustomers}
                 setCustomers={setCustomers}
                 pendingBills={initialPendingBills}
+                setPendingBills={setPendingBills}
+                customerCreditLimit={customerCreditLimit}
                 eventBookings={initialEventBookings}
                 setEventBookings={setEventBookings}
                 currency={initialCurrency}
+              />
+            </TabsContent>
+            <TabsContent value="vendors" className="m-0 p-0 h-full">
+              <VendorManagement
+                vendors={initialVendors}
+                setVendors={setVendors}
+                pendingBills={initialPendingBills}
+                setPendingBills={setPendingBills}
+                expenses={initialExpenses}
+                setExpenses={setExpenses}
+                vendorCreditLimit={vendorCreditLimit}
+                currency={initialCurrency}
+                purchaseOrders={initialPurchaseOrders}
+                setPurchaseOrders={setPurchaseOrders}
+                draftItems={initialDraftItems}
+                setDraftItems={setDraftItems}
+                inventory={initialInventory}
+                setInventory={setInventory}
               />
             </TabsContent>
             <TabsContent value="expenses" className="m-0 p-0 h-full">
@@ -823,6 +1002,21 @@ export default function MainLayout({
                 setVenueName={setVenueName}
                 currency={initialCurrency}
                 setCurrency={setCurrency}
+                vendors={initialVendors}
+                setVendors={setVendors}
+                purchaseOrders={initialPurchaseOrders}
+                setPurchaseOrders={setPurchaseOrders}
+                draftItems={initialDraftItems}
+                setDraftItems={setDraftItems}
+                pendingBills={initialPendingBills}
+                setPendingBills={setPendingBills}
+                setExpenses={setExpenses}
+                adminRequests={adminRequests}
+                setAdminRequests={setAdminRequests}
+                unlockedItems={unlockedItems}
+                setUnlockedItems={setUnlockedItems}
+                currentUser={currentUser}
+                onSwitchProfile={() => setIsStaffLoginOpen(true)}
               />
             </TabsContent>
           </main>
@@ -834,6 +1028,12 @@ export default function MainLayout({
         onOpenChange={setIsIncomingOrderDialogOpen}
         customerOrders={customerOrders}
         onAccept={handleAcceptCustomerOrder}
+      />
+      <StaffLogin
+        isOpen={isStaffLoginOpen}
+        onOpenChange={setIsStaffLoginOpen}
+        employees={initialEmployees}
+        onLogin={handleLogin}
       />
     </div>
   );
