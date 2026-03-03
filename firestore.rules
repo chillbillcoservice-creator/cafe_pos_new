@@ -1,5 +1,5 @@
 /**
- * Cafe POS — Firestore Security Rules
+ * Cafe POS — Firestore Security Rules (Production Hardened)
  *
  * Auth model:
  *  - Owner signs in via Google OAuth (owner-auth-screen.tsx)
@@ -8,14 +8,10 @@
  *  - All data lives under /venues/{venueId} — scoped per business
  *
  * Security levels:
- *  ① Owner (Google Auth) — full read/write on their venue
- *  ② Staff (anonymous auth, post-PIN) — read/write on their venue's operational data  
+ *  ① Owner (Google Auth, uid == venueId) — full read/write on their venue
+ *  ② Staff (Google Auth) — read/write on operational data
  *  ③ Customer (unauthenticated) — can ONLY write new customerOrders (QR self-serve)
  *  ④ Everyone else — denied
- *
- * Scaling note:
- *  To add multi-staff role enforcement in future, attach a Custom Claim:
- *  request.auth.token.role == 'manager' | 'staff'
  */
 rules_version = '2';
 service cloud.firestore {
@@ -23,23 +19,26 @@ service cloud.firestore {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
+    // True for any non-anonymous authenticated user
     function isAuthenticated() {
-      // Ensure the user is authenticated and not using the anonymous provider 
-      // (which is used for QR customers)
-      return request.auth != null && request.auth.token.firebase.sign_in_provider != 'anonymous';
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
 
-    // ── Venue-scoped data ─────────────────────────────────────────────────────
-    // All operational data lives under /venues/{venueId}/...
+    // True only for the venue owner (their Google UID == the venueId)
+    function isOwner(venueId) {
+      return isAuthenticated() && request.auth.uid == venueId;
+    }
+
+    // ── Primary data path: /venues/{venueId}/... ──────────────────────────────
+    // This is the secure path. Only the owner whose UID matches venueId can access.
     match /venues/{venueId}/{document=**} {
-      // The venueId is the Owner's Google Auth UID
-      // Only the authenticated Owner of this venue, OR their staff (using the shared session), can access
-      allow read, write: if isAuthenticated() && request.auth.uid == venueId;
+      allow read, write: if isOwner(venueId);
     }
 
-    // ── Top-level legacy collections (MVP single-venue support) ───────────────
-    // These collections exist at the root level for the current MVP.
-    // All require authentication.
+    // ── Top-level legacy collections (MVP single-venue) ───────────────────────
+    // These exist for the current single-venue MVP. Access requires authentication.
+
     match /menu/{categorySlug} {
       allow read: if isAuthenticated();
       allow write: if isAuthenticated();
@@ -76,28 +75,30 @@ service cloud.firestore {
 
     // ── Customer Self-Serve Orders (QR Code) ──────────────────────────────────
     // Customers scanning a QR code are NOT authenticated.
-    // They can ONLY create new orders (write), not read others.
+    // They can ONLY create new orders, not read others.
     match /customerOrders/{orderId} {
-      // Any authenticated user (staff) can read and manage customer orders
+      // Authenticated staff can fully manage orders
       allow read, write: if isAuthenticated();
-      // Unauthenticated customers can ONLY create new orders via QR scan
+
+      // Unauthenticated QR customers can only CREATE with valid required fields
       allow create: if request.auth == null
         && request.resource.data.keys().hasAll(['tableId', 'status', 'createdAt', 'items'])
-        && request.resource.data.status == 'pending';
+        && request.resource.data.status == 'pending'
+        && request.resource.data.items.size() > 0
+        && request.resource.data.items.size() <= 50;
     }
 
     // ── Whitelist — Access Control for new venue owners ────────────────────────
-    // Only authenticated users can read their own whitelist entry.
-    // Entries are managed exclusively by the admin (Firebase Console / Admin SDK).
+    // Users can only read their OWN whitelist entry (to check if they're approved).
+    // Only Firebase Admin SDK / Console can write entries.
     match /whitelist/{email} {
       allow read: if request.auth != null
         && request.auth.token.email != null
         && request.auth.token.email.lower() == email;
-      allow write: if false; // Admin Console / Admin SDK only
+      allow write: if false; // Admin SDK / Firebase Console only
     }
 
-    // ── Deny everything else ─────────────────────────────────────────────────
-    // REMOVED the catch-all rule that bypassed venue scoping.
-    // Any collection not explicitly listed above is denied by default.
+    // ── Deny everything else ──────────────────────────────────────────────────
+    // Any collection not explicitly listed above is denied by default in Firestore.
   }
 }
