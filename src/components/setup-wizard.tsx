@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
 import { buildUsername, generateLoginCode } from "@/lib/generate-username";
-import { Eye, EyeOff, Copy, Check } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 
 interface SetupWizardProps {
   onComplete: (data: SetupData) => void;
@@ -82,26 +82,50 @@ function WizardSection({ title, children, defaultOpen = false }: { title: string
   );
 }
 
-function PasswordInput({ id, value, onChange, placeholder }: { id?: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
-  const [show, setShow] = useState(false);
+function PinInput({ id, value, onChange }: { id?: string; value: string; onChange: (v: string) => void }) {
+  const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+  const digits = [value[0] || '', value[1] || '', value[2] || '', value[3] || ''];
+
+  const handleChange = (idx: number, char: string) => {
+    const digit = char.replace(/\D/g, '').slice(-1);
+    const newDigits = [...digits];
+    newDigits[idx] = digit;
+    onChange(newDigits.join(''));
+    if (digit && idx < 3) inputsRef.current[idx + 1]?.focus();
+  };
+
+  const handleKeyDown = (idx: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !digits[idx] && idx > 0) {
+      inputsRef.current[idx - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && idx > 0) {
+      inputsRef.current[idx - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && idx < 3) {
+      inputsRef.current[idx + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+    if (pasted) onChange(pasted.padEnd(4, '').slice(0, 4));
+    e.preventDefault();
+  };
+
   return (
-    <div className="relative">
-      <input
-        id={id}
-        type={show ? 'text' : 'password'}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="h-10 w-full px-3 pr-10 rounded-md bg-background border border-input text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500/50"
-      />
-      <button
-        type="button"
-        onClick={() => setShow(!show)}
-        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-        tabIndex={-1}
-      >
-        {show ? <EyeOff size={15} /> : <Eye size={15} />}
-      </button>
+    <div id={id} className="flex gap-2" onPaste={handlePaste}>
+      {digits.map((d, idx) => (
+        <input
+          key={idx}
+          ref={el => { inputsRef.current[idx] = el; }}
+          type="password"
+          inputMode="numeric"
+          maxLength={1}
+          value={d}
+          onChange={e => handleChange(idx, e.target.value)}
+          onKeyDown={e => handleKeyDown(idx, e)}
+          className="w-12 h-12 text-center text-xl font-black rounded-lg bg-background border border-input text-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all"
+          placeholder="•"
+        />
+      ))}
     </div>
   );
 }
@@ -696,17 +720,16 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                     <p className="text-[10px] text-muted-foreground">Use this ID to log in to the POS</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="owner-pwd" className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                    <Label htmlFor="owner-pin" className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
                       <Shield size={13} className="text-orange-400" />
-                      {t('Login Password')}
+                      4-Digit Passcode
                     </Label>
-                    <PasswordInput
-                      id="owner-pwd"
-                      value={owner.password || ''}
-                      onChange={(v) => handleBasicChange(setOwner, 'password', v)}
-                      placeholder="Set a password (optional)"
+                    <PinInput
+                      id="owner-pin"
+                      value={owner.loginCode || ''}
+                      onChange={(v) => handleBasicChange(setOwner, 'loginCode', v)}
                     />
-                    <p className="text-[10px] text-muted-foreground">Leave blank to allow login without password</p>
+                    <p className="text-[10px] text-muted-foreground">Staff will use this 4-digit PIN to log in</p>
                   </div>
                 </div>
               </div>
@@ -764,17 +787,16 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       <p className="text-[10px] text-muted-foreground">Use this ID to log in to the POS</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`partner-pwd-${idx}`} className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                      <Label htmlFor={`partner-pin-${idx}`} className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
                         <Shield size={13} className="text-orange-400" />
-                        {t('Login Password')}
+                        4-Digit Passcode
                       </Label>
-                      <PasswordInput
-                        id={`partner-pwd-${idx}`}
-                        value={own.password || ''}
-                        onChange={(v) => updateAdditionalOwner(idx, 'password', v)}
-                        placeholder="Set a password (optional)"
+                      <PinInput
+                        id={`partner-pin-${idx}`}
+                        value={own.loginCode || ''}
+                        onChange={(v) => updateAdditionalOwner(idx, 'loginCode', v)}
                       />
-                      <p className="text-[10px] text-muted-foreground">Leave blank to allow login without password</p>
+                      <p className="text-[10px] text-muted-foreground">Staff will use this 4-digit PIN to log in</p>
                     </div>
                   </div>
                 </div>
@@ -836,17 +858,16 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       <p className="text-[10px] text-muted-foreground">Share this with the employee for login</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`emp-pwd-${idx}`} className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                      <Label htmlFor={`emp-pin-${idx}`} className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
                         <Shield size={13} className="text-orange-400" />
-                        {t('Login Password')}
+                        4-Digit Passcode
                       </Label>
-                      <PasswordInput
-                        id={`emp-pwd-${idx}`}
-                        value={emp.password || ''}
-                        onChange={(v) => updateEmployee(idx, 'password', v)}
-                        placeholder="Set a password (optional)"
+                      <PinInput
+                        id={`emp-pin-${idx}`}
+                        value={emp.loginCode || ''}
+                        onChange={(v) => updateEmployee(idx, 'loginCode', v)}
                       />
-                      <p className="text-[10px] text-muted-foreground">Leave blank to allow login without password</p>
+                      <p className="text-[10px] text-muted-foreground">Staff will use this 4-digit PIN to log in</p>
                     </div>
                   </div>
 
