@@ -996,7 +996,7 @@ export default function LoginScreen({
                         <p className="font-mono text-xs uppercase tracking-[0.3em] font-bold mb-4" style={{ color: T.coral }}>Zero Setup Fees · No Credit Card</p>
                         <h2 className="text-5xl md:text-6xl font-black tracking-[-0.04em] mb-6" style={{ color: T.text }}>
                             Ready to Chill?<br />
-                            <span style={{ background: T.grad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Start billing smarter.</span>
+                            <span style={{ backgroundImage: T.grad, WebkitBackgroundClip: "text", backgroundClip: "text", WebkitTextFillColor: "transparent", color: "transparent", display: "inline-block" }}>Start billing smarter.</span>
                         </h2>
                         <p className="text-base font-medium mb-10" style={{ color: T.textMute }}>Join hundreds of restaurants already running on ChillBill.</p>
                         <button onClick={() => openAuthModal("signup")}
