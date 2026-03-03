@@ -156,12 +156,31 @@ export default function AppEntry({
     setCurrency(data.currency);
     setLanguage(data.language);
 
-    // Create initial employees with auto-generated usernames
+    // Build owner as first employee (so they appear on PIN login screen)
+    const ownerLoginCode = data.owner.loginCode || '0000';
+    const ownerEmployee: Employee = {
+      id: 'owner-1',
+      name: data.owner.name,
+      role: 'Owner',
+      salary: 0,
+      color: '#f97316',
+      mobile: data.owner.contactNumber,
+      email: data.owner.email,
+      allowedTabs: ['all'],
+      password: data.owner.password || '',
+      loginCode: ownerLoginCode,
+      username: buildUsername(data.venue.name, data.owner.name, ownerLoginCode),
+    };
+
+    // Create employees list (owner first, then staff)
+    const newEmployees: Employee[] = [ownerEmployee];
+
     if (data.employees && data.employees.length > 0) {
-      const newEmployees: Employee[] = data.employees.map((emp, index) => {
+      data.employees.forEach((emp, index) => {
+        if (!emp.name) return;
         const loginCode = emp.loginCode || String(Math.floor(1000 + Math.random() * 9000));
         const username = emp.username || buildUsername(data.venue.name, emp.name || 'Unknown', loginCode);
-        return {
+        newEmployees.push({
           id: `EMP${String(index + 1).padStart(3, '0')}`,
           name: emp.name || 'Unknown',
           role: emp.role || 'Staff',
@@ -174,10 +193,13 @@ export default function AppEntry({
           password: emp.password || '',
           username,
           loginCode,
-        };
+        });
       });
-      setEmployees([...employees, ...newEmployees]);
     }
+
+    // REPLACE (not append) to avoid duplicates from old localStorage data
+    setEmployees(newEmployees);
+
 
     // Create initial vendors
     if (data.vendors && data.vendors.length > 0) {
