@@ -230,7 +230,7 @@ export default function AppEntry({
         <LoginScreen
           employees={employees}
           venueName={venueName}
-          venueId={venueId}
+          venueId={venueId || undefined}
           onLogin={(emp) => setCurrentEmployee(emp)}
           onAccessDenied={(email) => setDeniedEmail(email)}
           onOwnerLogin={async (uid) => {
@@ -288,7 +288,7 @@ export default function AppEntry({
         <LoginScreen
           employees={employees}
           venueName={venueName}
-          venueId={venueId}
+          venueId={venueId || undefined}
           isPosMode={true}
           onLogin={(emp) => setCurrentEmployee(emp)}
         />
