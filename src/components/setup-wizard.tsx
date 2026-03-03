@@ -116,7 +116,7 @@ function PinInput({ id, value, onChange }: { id?: string; value: string; onChang
         <input
           key={idx}
           ref={el => { inputsRef.current[idx] = el; }}
-          type="password"
+          type="text"
           inputMode="numeric"
           maxLength={1}
           value={d}
