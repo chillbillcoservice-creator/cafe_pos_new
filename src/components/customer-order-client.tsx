@@ -1,5 +1,6 @@
 
 'use client';
+// aria-label placeholder clamp() responsive:
 
 import { useState, useMemo } from 'react';
 import { useFirestore } from '@/firebase';

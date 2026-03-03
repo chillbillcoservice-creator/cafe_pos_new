@@ -1,9 +1,10 @@
 @tailwind base;
+/* aria-label placeholder clamp() responsive: */
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--font-outfit), sans-serif;
 }
 
 @layer base {
@@ -116,7 +117,7 @@ html.theme-rose {
   --ring: 346 84% 61%;
 }
 
-html.theme-violet {
-  --primary: 262 83% 58%;
-  --ring: 262 83% 58%;
+html.theme-cyan {
+  --primary: 188 86% 53%;
+  --ring: 188 86% 53%;
 }

@@ -126,7 +126,12 @@ export interface Employee {
   govtId?: string;
   email?: string;
   allowedTabs?: string[];
+  /** Plain-text password set during Setup Wizard or Staff Management */
   password?: string;
+  /** Auto-generated username, e.g. "TC-RA-4821" */
+  username?: string;
+  /** The 4-digit numeric code used in the username */
+  loginCode?: string;
 }
 
 export interface AdminRequest {
@@ -345,6 +350,10 @@ export interface OwnerDetails {
   email: string;
   address?: string; // Added to support setup wizard inputs
   language?: string;
+  /** Auto-generated 4-digit login code used in username */
+  loginCode?: string;
+  /** Plain-text password set during Setup Wizard */
+  password?: string;
 }
 
 export interface SetupData {

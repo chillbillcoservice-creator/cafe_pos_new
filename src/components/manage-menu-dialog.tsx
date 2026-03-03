@@ -312,7 +312,7 @@ const slugify = (text: string) => {
     .replace(/-+$/, '');
 }
 
-const colorNames = ['amber', 'lime', 'rose', 'violet', 'cyan', 'pink', 'fuchsia', 'purple', 'indigo', 'green', 'yellow', 'emerald', 'teal', 'sky', 'blue', 'orange'];
+const colorNames = ['amber', 'lime', 'rose', 'slate', 'cyan', 'pink', 'zinc', 'stone', 'neutral', 'green', 'yellow', 'emerald', 'teal', 'sky', 'blue', 'orange'];
 
 
 export function ManageMenuDialog({

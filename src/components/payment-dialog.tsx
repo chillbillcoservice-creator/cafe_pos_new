@@ -84,7 +84,7 @@ export function PaymentDialog({ isOpen, onOpenChange, total, receiptPreview, onP
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-4xl">
+      <DialogContent data-testid="payment-dialog" className="sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{t('Process Payment')}</DialogTitle>
         </DialogHeader>
@@ -138,7 +138,7 @@ export function PaymentDialog({ isOpen, onOpenChange, total, receiptPreview, onP
                   {t('Change Due:')} {currency}{change.toFixed(2)}
                 </div>
               )}
-              <Button onClick={handleCashConfirm} className="w-full" size="lg">{t('Confirm Cash Payment')}</Button>
+              <Button data-testid="confirm-cash-payment" onClick={handleCashConfirm} className="w-full" size="lg">{t('Confirm Cash Payment')}</Button>
             </CardContent>
           </Card>
 
@@ -154,7 +154,7 @@ export function PaymentDialog({ isOpen, onOpenChange, total, receiptPreview, onP
                   {t('Show QR code to customer.')}
                 </p>
               </div>
-              <Button onClick={handleOnlineConfirm} className="w-full" size="lg">{t('Confirm Online Payment')}</Button>
+              <Button data-testid="confirm-online-payment" onClick={handleOnlineConfirm} className="w-full" size="lg">{t('Confirm Online Payment')}</Button>
             </CardContent>
           </Card>
         </div>

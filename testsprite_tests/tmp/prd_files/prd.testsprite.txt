@@ -1,0 +1,123 @@
+# Product Requirements Document — Café POS System
+
+## Overview
+
+A web-based Point-of-Sale (POS) application for restaurant/café management, built with Next.js 15, React 18, and Firebase Firestore. Staff log in and use the POS to take and process orders in-venue. Admins manage menus, view reports, and track expenses.
+
+---
+
+## Core Features
+
+### 1. First-Time Setup Wizard (Root Path `/`)
+
+- **CRITICAL:** There is NO `/login` route in this application. All access begins at the root path `/`.
+- On first launch (when the database is empty), a multi-step setup wizard appears at `/`.
+- Steps: 
+  1. Enter Venue Name (e.g., "Test Cafe") into the placeholder `e.g. The Grand Hotel`.
+  2. Click **Next**.
+  3. Enter Owner Name (e.g., "Test Owner") into the placeholder `Full Name`.
+  4. Click **Next** to advance.
+  5. Click **Next** again for menu setup.
+  6. Click **Finish** or **Complete** on the last step.
+- After completing setup, the app transitions automatically to the Staff Login screen on the same route (`/`).
+
+### 2. Staff Login Screen (Root Path `/`)
+
+- **CRITICAL:** This occurs on the root path `/`. Do not navigate to `/login`.
+- Displays employee cards (grid of avatars with names).
+- Title reads "Who is working?".
+- Clicking a staff card authenticates that user and immediately shows the POS table grid.
+
+### 3. POS Table Grid (Main View)
+
+- Shows all restaurant tables as cards (e.g., Table 1, Table 2…).
+- Each table card has a `data-testid` of `table-{N}`.
+- Clicking a table opens the Order Panel on the right side.
+- Tables can show status: Available, Occupied, Reserved.
+
+### 4. Menu & Order Panel
+
+- After selecting a table, the left panel shows menu items.
+- Each menu item card has a `data-testid` of `menu-item-{name}`.
+- Each card shows item name, price, and an **Add** button.
+- Clicking **Add** opens an "Add to Order" confirmation dialog.
+- Clicking **Add to Order** in the dialog adds the item to the cart.
+- The cart total is shown in a `[data-testid="cart-total"]` element.
+- The **Process Payment** button is only enabled when cart total > 0.
+
+### 5. Payment Processing
+
+- Clicking **Process Payment** opens a `[data-testid="payment-dialog"]` dialog.
+- Two payment methods: **Cash** and **Online**.
+
+**Cash Flow:**
+1. Input field with `id="cash-received"` accepts the cash amount.
+2. Shows calculated change (Cash Received − Total).
+3. Confirm button: `[data-testid="confirm-cash-payment"]`.
+4. Error shown if cash entered is less than the total amount.
+
+**Online Flow:**
+1. Shows QR code or confirmation button.
+2. Confirm button: `[data-testid="confirm-online-payment"]`.
+
+- On successful payment, order is marked complete and table is freed.
+
+### 6. Menu Management
+
+- A **Manage Menu** button in the POS toolbar opens a dialog.
+- Admin can Add, Edit, and Delete menu items.
+- Fields: Name, Price, Category, Description, Available toggle.
+
+### 7. Admin Dashboard
+
+- Accessible via navigation tabs in the main layout.
+
+**Tabs include:**
+- **Bill History** — lists all completed bills with totals.
+- **Expenses** — allows logging expenses via an **Add Expense** button that opens a dialog.
+- **Sales Report / Analytics** — charts showing daily/weekly revenue.
+- **Table Management** — add, rename, or remove tables.
+- **Staff Management** — add/edit staff members.
+
+### 8. Table Management
+
+- Tables are visible on the POS grid after setup.
+- Each table card uses `data-testid="table-{N}"` format.
+- Admin can add new tables and rename existing ones.
+
+### 9. Customer-Facing Order Page
+
+- A separate `/order` route for customer self-ordering.
+- Displays menu categories and items.
+- Customers can add items and submit their order.
+
+---
+
+## Tech Stack
+
+- **Frontend:** Next.js 15, React 18, Tailwind CSS, shadcn/ui components
+- **Backend/DB:** Firebase Firestore (real-time data sync)
+- **AI features:** Genkit flows for receipt discounts, PDF report generation, menu scanning
+- **Auth:** Firebase Anonymous Auth + staff PIN/card selection
+- **Deployment:** Vercel (port 3000 locally)
+
+---
+
+## Users & Roles
+
+| Role | Access |
+|---|---|
+| Guest/Staff | POS grid, order flow, payment |
+| Admin | All above + menu management, reports, staff/table management |
+
+---
+
+## Key User Journeys to Test
+
+1. **Complete onboarding** → setup wizard → staff login → POS grid loads
+2. **Take a table order** → select table → add item → confirm → cart updates
+3. **Process cash payment** → enter amount ≥ total → confirm → success
+4. **Process online payment** → confirm → success
+5. **Manage menu** → open dialog → add item → item appears in POS
+6. **Admin views bill history** → navigate to Bills tab → list visible
+7. **Customer self-orders** → navigate to `/order` → menu visible → item added

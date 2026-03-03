@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,8 @@ import { SetupData, VenueDetails, OwnerDetails, Employee } from "@/lib/types";
 import { ThemeToggle } from "./theme-toggle";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/language-context";
+import { buildUsername, generateLoginCode } from "@/lib/generate-username";
+import { Eye, EyeOff, Copy, Check } from "lucide-react";
 
 interface SetupWizardProps {
   onComplete: (data: SetupData) => void;
@@ -76,6 +78,30 @@ function WizardSection({ title, children, defaultOpen = false }: { title: string
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PasswordInput({ id, value, onChange, placeholder }: { id?: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative">
+      <input
+        id={id}
+        type={show ? 'text' : 'password'}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-10 w-full px-3 pr-10 rounded-md bg-background border border-input text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-orange-500/50"
+      />
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+        tabIndex={-1}
+      >
+        {show ? <EyeOff size={15} /> : <Eye size={15} />}
+      </button>
     </div>
   );
 }
@@ -216,6 +242,8 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
     name: initialData?.owner?.name || "",
     contactNumber: initialData?.owner?.contactNumber || "",
     email: initialData?.owner?.email || "",
+    loginCode: initialData?.owner?.loginCode || generateLoginCode(),
+    password: initialData?.owner?.password || "",
   });
 
   const [additionalOwners, setAdditionalOwners] = useState<OwnerDetails[]>(initialData?.additionalOwners || []);
@@ -228,7 +256,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
   const [employees, setEmployees] = useState<Partial<Employee>[]>(
     (initialData?.employees && initialData.employees.length > 0)
       ? initialData.employees
-      : [{ name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b', allowedTabs: getRoleDefaults('Manager') }]
+      : [{ name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b', allowedTabs: getRoleDefaults('Manager'), loginCode: generateLoginCode(), password: '' }]
   );
 
   // Vendor State
@@ -251,7 +279,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
   };
 
   const addEmployeeCard = () => {
-    setEmployees([...employees, { name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b', allowedTabs: getRoleDefaults('Manager') }]);
+    setEmployees([...employees, { name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b', allowedTabs: getRoleDefaults('Manager'), loginCode: generateLoginCode(), password: '' }]);
   };
 
   const updateEmployee = (index: number, field: keyof Employee, value: any) => {
@@ -286,7 +314,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
     const newEmps = [...employees];
     if (newEmps.length === 1) {
       // Don't remove the last card, just reset it
-      newEmps[0] = { name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b', allowedTabs: getRoleDefaults('Manager') };
+      newEmps[0] = { name: "", role: "Manager", salary: 0, mobile: "", email: "", govtId: "", color: '#f59e0b', allowedTabs: getRoleDefaults('Manager'), loginCode: generateLoginCode(), password: '' };
     } else {
       newEmps.splice(index, 1);
     }
@@ -315,7 +343,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
   };
 
   const addOwner = () => {
-    setAdditionalOwners([...additionalOwners, { name: "", contactNumber: "", email: "" }]);
+    setAdditionalOwners([...additionalOwners, { name: "", contactNumber: "", email: "", loginCode: generateLoginCode(), password: "" }]);
   };
 
   const updateAdditionalOwner = (index: number, field: keyof OwnerDetails, value: string) => {
@@ -362,7 +390,11 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
 
   return (
     <Dialog open={true} >
-      <DialogContent className="sm:max-w-[800px] w-full [&>button]:hidden overflow-hidden max-h-[85vh] flex flex-col p-4 md:p-6">
+      <DialogContent className="sm:max-w-[800px] w-full border-0 shadow-2xl [&>button]:hidden overflow-hidden max-h-[85vh] flex flex-col p-4 md:p-6 bg-background/95 backdrop-blur-2xl rounded-2xl ring-1 ring-border/50">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl">
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl opacity-50" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl opacity-50" />
+        </div>
         <div className="absolute top-4 right-4 z-50">
           <ThemeToggle />
         </div>
@@ -385,7 +417,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                     ? "border-orange-500 bg-orange-500/10 text-orange-600 shadow-sm ring-1 ring-orange-500/20"
                     : step > s.id
                       ? "border-orange-500/30 bg-orange-500/5 text-orange-600/70"
-                      : "border-zinc-800 bg-zinc-900/50 text-muted-foreground hover:bg-zinc-800 hover:border-zinc-700"
+                      : "border-border bg-muted/40 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
                 type="button"
               >
@@ -397,7 +429,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
               </button>
             ))}
           </div>
-          <div className="border-b border-zinc-800/80 mt-2" />
+          <div className="border-b border-border/80 mt-2" />
         </DialogHeader>
 
         <div className="py-4 px-2 flex-1 overflow-y-auto custom-scrollbar">
@@ -412,7 +444,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       value={venue.name}
                       onChange={(e) => handleBasicChange(setVenue, 'name', e.target.value)}
                       placeholder="e.g. The Grand Hotel"
-                      className="h-10 bg-zinc-900/50 border-zinc-700 text-sm focus:ring-blue-500/20"
+                      className="h-10 bg-background border-input text-sm focus:ring-orange-500/20"
                     />
                   </div>
 
@@ -422,11 +454,11 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       value={venue.tagline}
                       onChange={(e) => handleBasicChange(setVenue, 'tagline', e.target.value)}
                       placeholder="e.g. Best Brews in Town"
-                      className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                      className="h-10 bg-background border-input text-sm"
                     />
                   </div>
 
-                  <div className="border-b border-zinc-800 my-2" />
+                  <div className="border-b border-border my-2" />
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -435,7 +467,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                         value={venue.city}
                         onChange={(e) => handleBasicChange(setVenue, 'city', e.target.value)}
                         placeholder="e.g. Manali"
-                        className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                        className="h-10 bg-background border-input text-sm"
                       />
                     </div>
                     <div className="space-y-2">
@@ -444,7 +476,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                         value={venue.state}
                         onChange={(e) => handleBasicChange(setVenue, 'state', e.target.value)}
                         placeholder="e.g. HP"
-                        className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                        className="h-10 bg-background border-input text-sm"
                       />
                     </div>
                   </div>
@@ -455,7 +487,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       value={venue.zip}
                       onChange={(e) => handleBasicChange(setVenue, 'zip', e.target.value)}
                       placeholder="e.g. 175131"
-                      className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                      className="h-10 bg-background border-input text-sm"
                     />
                   </div>
                 </div>
@@ -470,7 +502,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       value={venue.email}
                       onChange={(e) => handleBasicChange(setVenue, 'email', e.target.value)}
                       placeholder="e.g. contact@hotel.com"
-                      className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                      className="h-10 bg-background border-input text-sm"
                     />
                   </div>
 
@@ -480,11 +512,11 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       value={venue.contactNumber}
                       onChange={(e) => handleBasicChange(setVenue, 'contactNumber', e.target.value)}
                       placeholder="e.g. +91 9876543210"
-                      className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                      className="h-10 bg-background border-input text-sm"
                     />
                   </div>
 
-                  <div className="border-b border-zinc-800 my-2" />
+                  <div className="border-b border-border my-2" />
 
                   <div className="space-y-2">
                     <Label className="text-sm font-bold text-muted-foreground">{t('Country')}</Label>
@@ -502,7 +534,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                         }
                       }}
                     >
-                      <SelectTrigger className="h-10 bg-zinc-900/50 border-zinc-700 text-sm">
+                      <SelectTrigger className="h-10 bg-background border-input text-sm">
                         <SelectValue placeholder={t('Select Country')} />
                       </SelectTrigger>
                       <SelectContent className="max-h-[200px]">
@@ -527,7 +559,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                         setGlobalLanguage(val as any);
                       }}
                     >
-                      <SelectTrigger className="h-10 bg-zinc-900/50 border-zinc-700 text-sm">
+                      <SelectTrigger className="h-10 bg-background border-input text-sm">
                         <SelectValue placeholder={t('Select Language')} />
                       </SelectTrigger>
                       <SelectContent>
@@ -568,7 +600,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                           value={customCountry}
                           onChange={(e) => setCustomCountry(e.target.value)}
                           placeholder={t('Enter Name')}
-                          className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                          className="h-10 bg-background border-input text-sm"
                         />
                       </div>
                       <div className="space-y-2">
@@ -577,7 +609,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                           value={customCurrency}
                           onChange={(e) => setCustomCurrency(e.target.value)}
                           placeholder="e.g. $"
-                          className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                          className="h-10 bg-background border-input text-sm"
                         />
                       </div>
                     </div>
@@ -603,7 +635,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                     value={owner.name}
                     onChange={(e) => handleBasicChange(setOwner, 'name', e.target.value)}
                     placeholder={t('Full Name')}
-                    className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                    className="h-10 bg-background border-input text-sm"
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -613,7 +645,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       value={owner.contactNumber}
                       onChange={(e) => handleBasicChange(setOwner, 'contactNumber', e.target.value)}
                       placeholder="e.g., 9876543210"
-                      className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                      className="h-10 bg-background border-input text-sm"
                     />
                   </div>
                   <div className="space-y-2">
@@ -622,7 +654,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                       value={owner.email}
                       onChange={(e) => handleBasicChange(setOwner, 'email', e.target.value)}
                       placeholder="e.g., owner@example.com"
-                      className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                      className="h-10 bg-background border-input text-sm"
                     />
                   </div>
                 </div>
@@ -632,14 +664,56 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                     value={owner.address || ''}
                     onChange={(e) => handleBasicChange(setOwner, 'address', e.target.value)}
                     placeholder={t('Full Address')}
-                    className="w-full h-16 bg-zinc-900/50 border rounded-md border-zinc-700 text-sm p-3 focus:outline-none focus:ring-1 focus:ring-zinc-600 resize-none"
+                    className="w-full h-16 bg-background border rounded-md border-input text-sm p-3 focus:outline-none focus:ring-1 focus:ring-orange-500/50 resize-none"
                   />
+                </div>
+
+                {/* Auto-generated ID & Password for Owner 1 */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 rounded-lg bg-orange-500/5 border border-orange-500/20">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                      <Shield size={13} className="text-orange-400" />
+                      {t('Login ID')} <span className="text-[10px] text-orange-400 font-normal">(auto-generated)</span>
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-10 px-3 flex items-center rounded-md bg-background border border-orange-500/30 font-mono text-sm text-orange-500 select-all tracking-wider">
+                        {owner.name
+                          ? buildUsername(venue.name || 'BIZ', owner.name, owner.loginCode || '0000')
+                          : <span className="text-muted-foreground font-sans text-xs">Enter name to generate</span>
+                        }
+                      </div>
+                      {owner.name && (
+                        <button
+                          type="button"
+                          onClick={() => navigator.clipboard.writeText(buildUsername(venue.name || 'BIZ', owner.name, owner.loginCode || '0000'))}
+                          className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-md bg-background border border-orange-500/30 text-orange-500 hover:bg-orange-500/10 transition-colors"
+                          title="Copy login ID"
+                        >
+                          <Copy size={14} />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">Use this ID to log in to the POS</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="owner-pwd" className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                      <Shield size={13} className="text-orange-400" />
+                      {t('Login Password')}
+                    </Label>
+                    <PasswordInput
+                      id="owner-pwd"
+                      value={owner.password || ''}
+                      onChange={(v) => handleBasicChange(setOwner, 'password', v)}
+                      placeholder="Set a password (optional)"
+                    />
+                    <p className="text-[10px] text-muted-foreground">Leave blank to allow login without password</p>
+                  </div>
                 </div>
               </div>
 
               {/* Additional Owners Cards */}
               {additionalOwners.map((own, idx) => (
-                <div key={idx} className="bg-card/50 backdrop-blur-sm p-6 rounded-xl border border-border shadow-sm space-y-6 relative">
+                <div key={idx} className="bg-card/50 backdrop-blur-sm p-4 rounded-xl border border-border shadow-sm space-y-4 relative">
                   <div className="absolute top-4 right-4">
                     <Button variant="ghost" size="icon" onClick={() => removeOwner(idx)} className="h-8 w-8 text-muted-foreground hover:text-red-400">
                       <Trash2 size={16} />
@@ -649,16 +723,58 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
 
                   <div className="space-y-2">
                     <Label className="text-sm font-bold text-muted-foreground">{t('Partner Name')}</Label>
-                    <Input value={own.name} onChange={(e) => updateAdditionalOwner(idx, 'name', e.target.value)} placeholder={t('Full Name')} className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                    <Input value={own.name} onChange={(e) => updateAdditionalOwner(idx, 'name', e.target.value)} placeholder={t('Full Name')} className="h-10 bg-background border-input text-sm" />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Mobile (Optional)')}</Label>
-                      <Input value={own.contactNumber} onChange={(e) => updateAdditionalOwner(idx, 'contactNumber', e.target.value)} placeholder="e.g., 9876543210" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={own.contactNumber} onChange={(e) => updateAdditionalOwner(idx, 'contactNumber', e.target.value)} placeholder="e.g., 9876543210" className="h-10 bg-background border-input text-sm" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Email (Optional)')}</Label>
-                      <Input value={own.email} onChange={(e) => updateAdditionalOwner(idx, 'email', e.target.value)} placeholder="e.g., partner@example.com" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={own.email} onChange={(e) => updateAdditionalOwner(idx, 'email', e.target.value)} placeholder="e.g., partner@example.com" className="h-10 bg-background border-input text-sm" />
+                    </div>
+                  </div>
+
+                  {/* Auto-generated ID & Password for Partner */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 rounded-lg bg-orange-500/5 border border-orange-500/20">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                        <Shield size={13} className="text-orange-400" />
+                        {t('Login ID')} <span className="text-[10px] text-orange-400 font-normal">(auto-generated)</span>
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-10 px-3 flex items-center rounded-md bg-background border border-orange-500/30 font-mono text-sm text-orange-500 select-all tracking-wider">
+                          {own.name
+                            ? buildUsername(venue.name || 'BIZ', own.name, own.loginCode || '0000')
+                            : <span className="text-muted-foreground font-sans text-xs">Enter name to generate</span>
+                          }
+                        </div>
+                        {own.name && (
+                          <button
+                            type="button"
+                            onClick={() => navigator.clipboard.writeText(buildUsername(venue.name || 'BIZ', own.name, own.loginCode || '0000'))}
+                            className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-md bg-background border border-orange-500/30 text-orange-500 hover:bg-orange-500/10 transition-colors"
+                            title="Copy login ID"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Use this ID to log in to the POS</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`partner-pwd-${idx}`} className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                        <Shield size={13} className="text-orange-400" />
+                        {t('Login Password')}
+                      </Label>
+                      <PasswordInput
+                        id={`partner-pwd-${idx}`}
+                        value={own.password || ''}
+                        onChange={(v) => updateAdditionalOwner(idx, 'password', v)}
+                        placeholder="Set a password (optional)"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Leave blank to allow login without password</p>
                     </div>
                   </div>
                 </div>
@@ -684,11 +800,53 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Employee')} {idx + 1} {t('Name')}</Label>
-                      <Input value={emp.name} onChange={(e) => updateEmployee(idx, 'name', e.target.value)} placeholder={t('Full Name')} className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={emp.name} onChange={(e) => updateEmployee(idx, 'name', e.target.value)} placeholder={t('Full Name')} className="h-10 bg-background border-input text-sm" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Email (Optional)')}</Label>
-                      <Input value={emp.email} onChange={(e) => updateEmployee(idx, 'email', e.target.value)} placeholder="e.g., employee@example.com" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={emp.email} onChange={(e) => updateEmployee(idx, 'email', e.target.value)} placeholder="e.g., employee@example.com" className="h-10 bg-background border-input text-sm" />
+                    </div>
+                  </div>
+
+                  {/* Auto-generated username + password */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-3 rounded-lg bg-orange-500/5 border border-orange-500/20">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                        <Shield size={13} className="text-orange-400" />
+                        {t('Login Username')} <span className="text-[10px] text-orange-400 font-normal">(auto-generated)</span>
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-10 px-3 flex items-center rounded-md bg-background border border-orange-500/30 font-mono text-sm text-orange-500 select-all tracking-wider">
+                          {emp.name
+                            ? buildUsername(venue.name || 'BIZ', emp.name, emp.loginCode || '0000')
+                            : <span className="text-muted-foreground font-sans text-xs">Enter name to generate</span>
+                          }
+                        </div>
+                        {emp.name && (
+                          <button
+                            type="button"
+                            onClick={() => navigator.clipboard.writeText(buildUsername(venue.name || 'BIZ', emp.name!, emp.loginCode || '0000'))}
+                            className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-md bg-background border border-orange-500/30 text-orange-500 hover:bg-orange-500/10 transition-colors"
+                            title="Copy username"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">Share this with the employee for login</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`emp-pwd-${idx}`} className="text-sm font-bold text-muted-foreground flex items-center gap-1.5">
+                        <Shield size={13} className="text-orange-400" />
+                        {t('Login Password')}
+                      </Label>
+                      <PasswordInput
+                        id={`emp-pwd-${idx}`}
+                        value={emp.password || ''}
+                        onChange={(v) => updateEmployee(idx, 'password', v)}
+                        placeholder="Set a password (optional)"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Leave blank to allow login without password</p>
                     </div>
                   </div>
 
@@ -699,7 +857,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                         value={(["Admin", "Manager", "Head Chef", "Chef", "Waiter", "Cleaner", "Helper", "Bar Tender", "Dishwasher", "Delivery Boy", "Other"].includes(emp.role || "") ? emp.role : "Other")}
                         onValueChange={(val) => updateEmployee(idx, 'role', val)}
                       >
-                        <SelectTrigger className="h-10 bg-zinc-900/50 border-zinc-700 text-sm">
+                        <SelectTrigger className="h-10 bg-background border-input text-sm">
                           <SelectValue placeholder={t('Select a role')} />
                         </SelectTrigger>
                         <SelectContent>
@@ -718,7 +876,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Salary')}</Label>
-                      <Input value={emp.salary?.toString()} onChange={(e) => updateEmployee(idx, 'salary', e.target.value)} placeholder="e.g., 25000" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={emp.salary?.toString()} onChange={(e) => updateEmployee(idx, 'salary', e.target.value)} placeholder="e.g., 25000" className="h-10 bg-background border-input text-sm" />
                     </div>
                   </div>
 
@@ -729,7 +887,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                         value={emp.role === "Other" ? "" : emp.role}
                         onChange={(e) => updateEmployee(idx, 'role', e.target.value)}
                         placeholder="e.g. Singer"
-                        className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                        className="h-10 bg-background border-input text-sm"
                       />
                     </div>
                   )}
@@ -737,11 +895,11 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Mobile No. (Optional)')}</Label>
-                      <Input value={emp.mobile} onChange={(e) => updateEmployee(idx, 'mobile', e.target.value)} placeholder="e.g., 9876543210" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={emp.mobile} onChange={(e) => updateEmployee(idx, 'mobile', e.target.value)} placeholder="e.g., 9876543210" className="h-10 bg-background border-input text-sm" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Govt. ID No. (Optional)')}</Label>
-                      <Input value={emp.govtId} onChange={(e) => updateEmployee(idx, 'govtId', e.target.value)} placeholder="e.g., Aadhar/PAN" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={emp.govtId} onChange={(e) => updateEmployee(idx, 'govtId', e.target.value)} placeholder="e.g., Aadhar/PAN" className="h-10 bg-background border-input text-sm" />
                     </div>
                   </div>
 
@@ -792,23 +950,23 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Vendor Name')}</Label>
-                      <Input value={v.name} onChange={(e) => updateVendor(idx, 'name', e.target.value)} placeholder="e.g. Local Veggies Co." className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={v.name} onChange={(e) => updateVendor(idx, 'name', e.target.value)} placeholder="e.g. Local Veggies Co." className="h-10 bg-background border-input text-sm" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Category')}</Label>
-                      <Input value={v.category} onChange={(e) => updateVendor(idx, 'category', e.target.value)} placeholder={t('e.g., Food & Beverage')} className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={v.category} onChange={(e) => updateVendor(idx, 'category', e.target.value)} placeholder={t('e.g., Food & Beverage')} className="h-10 bg-background border-input text-sm" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Mobile No.')}</Label>
-                      <Input value={v.phone} onChange={(e) => updateVendor(idx, 'phone', e.target.value)} placeholder="e.g., 9876543210" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={v.phone} onChange={(e) => updateVendor(idx, 'phone', e.target.value)} placeholder="e.g., 9876543210" className="h-10 bg-background border-input text-sm" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Email (Optional)')}</Label>
-                      <Input value={v.email} onChange={(e) => updateVendor(idx, 'email', e.target.value)} placeholder="e.g., vendor@example.com" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={v.email} onChange={(e) => updateVendor(idx, 'email', e.target.value)} placeholder="e.g., vendor@example.com" className="h-10 bg-background border-input text-sm" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Location (Optional)')}</Label>
-                      <Input value={v.location} onChange={(e) => updateVendor(idx, 'location', e.target.value)} placeholder="e.g., City Center" className="h-10 bg-zinc-900/50 border-zinc-700 text-sm" />
+                      <Input value={v.location} onChange={(e) => updateVendor(idx, 'location', e.target.value)} placeholder="e.g., City Center" className="h-10 bg-background border-input text-sm" />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-bold text-muted-foreground">{t('Billing Cycle (Optional)')}</Label>
@@ -816,7 +974,7 @@ export default function SetupWizard({ onComplete, initialData }: SetupWizardProp
                         type="date"
                         value={v.nextPaymentDate ? (v.nextPaymentDate instanceof Date ? v.nextPaymentDate.toISOString().split('T')[0] : v.nextPaymentDate) : ''}
                         onChange={(e) => updateVendor(idx, 'nextPaymentDate', e.target.value)}
-                        className="h-10 bg-zinc-900/50 border-zinc-700 text-sm"
+                        className="h-10 bg-background border-input text-sm"
                       />
                     </div>
                   </div>

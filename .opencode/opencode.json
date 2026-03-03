@@ -1,0 +1,10 @@
+{
+  "permission": {
+    "read": {
+      "C:/Users/pansh/OneDrive/Desktop/GITHUB POS/restaurant-app-main/cafe_pos_new/.opencode/get-shit-done/*": "allow"
+    },
+    "external_directory": {
+      "C:/Users/pansh/OneDrive/Desktop/GITHUB POS/restaurant-app-main/cafe_pos_new/.opencode/get-shit-done/*": "allow"
+    }
+  }
+}

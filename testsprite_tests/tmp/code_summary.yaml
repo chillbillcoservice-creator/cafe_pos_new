@@ -1,0 +1,100 @@
+version: "2"
+type: frontend
+tech_stack:
+  - next.js
+  - react
+  - tailwindcss
+  - firebase
+  - genkit
+routes:
+  - path: /
+    file: src/app/page.tsx
+    auth_required: false
+    description: Main POS Dashboard - includes Setup Wizard on first launch, then Staff Login grid, then POS table view
+  - path: /order
+    file: src/app/order/page.tsx
+    auth_required: false
+    description: Customer self-service order page
+features:
+  - name: First Time Setup Wizard
+    description: Guided onboarding wizard that appears on first launch to configure venue name and owner. Only shown if no setup data exists in Firestore.
+    files:
+      - src/app/page.tsx
+      - src/components/pos-system.tsx
+    entry_route: /
+    user_interactions:
+      - Wait for skeleton loader to disappear
+      - See setup wizard with venue name input field (placeholder 'e.g. The Grand Hotel')
+      - Enter venue name in the input field
+      - Click Next button to proceed
+      - Enter owner full name in the Full Name input field
+      - Click Next button to proceed
+      - Click Finish or Complete button to submit
+      - See the staff login grid after wizard completes
+    api_calls: []
+    auth_required: false
+  - name: Staff Login
+    description: After setup wizard, a grid of employee cards is shown. Clicking a card authenticates as that staff member.
+    files:
+      - src/app/page.tsx
+      - src/components/pos-system.tsx
+    entry_route: /
+    user_interactions:
+      - See the 'Who is working?' heading
+      - See employee cards displayed as a grid
+      - Click on an employee card to log in
+      - See the POS table grid dashboard after selecting an employee
+    api_calls: []
+    auth_required: false
+  - name: POS Ordering Flow
+    description: Staff selects a table, browses the menu, adds items to the cart, and processes cash or online payment.
+    files:
+      - src/components/pos-system.tsx
+      - src/components/payment-dialog.tsx
+    entry_route: /
+    user_interactions:
+      - Click on a table card (data-testid starts with 'table-')
+      - See the table cart and menu panel appear
+      - Click Add button on a menu item card to add it to cart
+      - See cart total update in the cart panel (data-testid='cart-total')
+      - Click Process Payment button (data-testid='pay-button') which is enabled only when cart has items
+      - See the payment dialog appear (data-testid='payment-dialog')
+      - Enter cash received amount in the cash input field (id='cash-received')
+      - Click Confirm Cash Payment button (data-testid='confirm-cash-payment')
+      - See payment success and dialog close
+    api_calls: []
+    auth_required: true
+  - name: Menu Management
+    description: Authorized staff can create and edit menu items from within the POS via a Manage Menu dialog.
+    files:
+      - src/components/pos-system.tsx
+    entry_route: /
+    user_interactions:
+      - Click Manage Menu button or icon to open the dialog
+      - Fill out item name input
+      - Fill out item price input (must be a positive number)
+      - Optionally fill out item description
+      - Click Save button to persist item to Firestore
+      - See new item appear in the menu list
+      - See validation error when price is missing or invalid
+    api_calls: []
+    auth_required: true
+  - name: Customer Self-Service Order
+    description: Customers can browse the menu and place orders from the /order route without staff interaction.
+    files:
+      - src/app/order/page.tsx
+    entry_route: /order
+    user_interactions:
+      - Navigate to /order
+      - Browse menu items
+      - Add items to cart
+      - Submit order
+    api_calls: []
+    auth_required: false
+known_limitations:
+  - issue: Setup wizard state depends on Firestore data - if data exists tests must skip wizard
+    location: src/components/pos-system.tsx
+    impact: Tests must handle both wizard-present and wizard-skipped states
+  - issue: Cart total only updates after a menu item is explicitly added via the Add button or dialog
+    location: src/components/pos-system.tsx
+    impact: Tests must click the Add button inside the menu card, not just the card itself

@@ -2,16 +2,36 @@
 # https://firebase.google.com/docs/app-hosting/configure
 
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 1
+  # Minimum 1 instance keeps the app warm and prevents cold-start delays.
+  minInstances: 1
+  maxInstances: 4
+
+# Environment variables and secrets injected at runtime.
+# Secrets are stored in Google Secret Manager.
+# To add a secret: firebase apphosting:secrets:set SECRET_NAME
+env:
+  # Gemini AI — required for scanMenuFlow and generateReportFlow
+  - variable: GOOGLE_API_KEY
+    secret: GOOGLE_API_KEY
+
+  # Gmail API — required for sendEmailReceiptFlow
+  - variable: GMAIL_CLIENT_ID
+    secret: GMAIL_CLIENT_ID
+  - variable: GMAIL_CLIENT_SECRET
+    secret: GMAIL_CLIENT_SECRET
+  - variable: GMAIL_REFRESH_TOKEN
+    secret: GMAIL_REFRESH_TOKEN
+  - variable: GMAIL_USER
+    secret: GMAIL_USER
+
+# Scheduled Cloud Tasks — trigger daily & monthly reports automatically.
 schedule:
-  - # Runs every day at midnight
+  - # Daily report — runs every day at midnight UTC
     schedule: 0 0 * * *
     http:
       path: /api/reports/daily
       method: GET
-  - # Runs on the 1st of every month at midnight
+  - # Monthly report — runs on 1st of each month at midnight UTC
     schedule: 0 0 1 * *
     http:
       path: /api/reports/monthly

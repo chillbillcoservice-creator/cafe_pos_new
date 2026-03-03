@@ -9,7 +9,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
+import * as React from 'react';
 import { Button } from '@/components/ui/button';
+// aria-label placeholder
 import { Utensils, LayoutGrid, Soup, Users, Shield, Receipt, Users2, HelpCircle, Zap, MousePointerClick, Keyboard, FileInput, Languages, Camera } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';

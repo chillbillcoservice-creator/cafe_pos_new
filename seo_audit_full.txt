@@ -1,0 +1,31 @@
+
+============================================================
+  SEO CHECKER - Search Engine Optimization Audit
+============================================================
+Project: C:\Users\pansh\OneDrive\Desktop\GITHUB POS\restaurant-app-main\cafe_pos_new
+Time: 2026-03-02 13:25:08
+------------------------------------------------------------
+Found 8 page files to analyze
+
+============================================================
+SEO ANALYSIS RESULTS
+============================================================
+
+Issue Summary:
+  [3] Missing meta description
+  [3] Missing Open Graph tags
+  [2] Missing <title> tag
+
+Affected files (3):
+  - testsprite-mcp-test-report.html
+  - main-layout.tsx
+  - customer-order-client.tsx
+
+{
+  "script": "seo_checker",
+  "project": "C:\\Users\\pansh\\OneDrive\\Desktop\\GITHUB POS\\restaurant-app-main\\cafe_pos_new",
+  "files_checked": 8,
+  "files_with_issues": 3,
+  "issues_found": 8,
+  "passed": false
+}

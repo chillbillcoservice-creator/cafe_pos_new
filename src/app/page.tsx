@@ -47,50 +47,50 @@ export default function Home() {
     const seededMenu = seedData();
 
     const data = {
-        menu: loadFromLocalStorage('menu', seededMenu),
-        inventory: loadFromLocalStorage('inventory', [
-            { "id": "1", "name": "Pizza Base", "stock": 100, "capacity": 200, "unit": "unit", "category": "Bakery" },
-            { "id": "2", "name": "Pasta", "stock": 50, "capacity": 100, "unit": "kg", "category": "Grains" },
-            { "id": "3", "name": "Cheese", "stock": 20, "capacity": 50, "unit": "kg", "category": "Dairy" },
-            { "id": "4", "name": "Coffee Beans", "stock": 30, "capacity": 50, "unit": "kg", "category": "Beverages" }
-        ]),
-        employees: loadFromLocalStorage('employees', []),
-        bills: loadFromLocalStorage('bills', []),
-        expenses: loadFromLocalStorage('expenses', []),
-        customers: loadFromLocalStorage('customers', []),
-        vendors: loadFromLocalStorage('vendors', []),
-        pendingBills: loadFromLocalStorage('pendingBills', []),
-        venueName: loadFromLocalStorage('venueName', "My Restaurant"),
-        kotPreference: loadFromLocalStorage('kotPreference', { type: 'separate' }),
-        attendance: loadFromLocalStorage('attendance', []),
-        advances: loadFromLocalStorage('advances', []),
+      menu: loadFromLocalStorage('menu', seededMenu),
+      inventory: loadFromLocalStorage('inventory', [
+        { "id": "1", "name": "Pizza Base", "stock": 100, "capacity": 200, "unit": "unit", "category": "Bakery" },
+        { "id": "2", "name": "Pasta", "stock": 50, "capacity": 100, "unit": "kg", "category": "Grains" },
+        { "id": "3", "name": "Cheese", "stock": 20, "capacity": 50, "unit": "kg", "category": "Dairy" },
+        { "id": "4", "name": "Coffee Beans", "stock": 30, "capacity": 50, "unit": "kg", "category": "Beverages" }
+      ]),
+      employees: loadFromLocalStorage('employees', []),
+      bills: loadFromLocalStorage('bills', []),
+      expenses: loadFromLocalStorage('expenses', []),
+      customers: loadFromLocalStorage('customers', []),
+      vendors: loadFromLocalStorage('vendors', []),
+      pendingBills: loadFromLocalStorage('pendingBills', []),
+      venueName: loadFromLocalStorage('venueName', "My Restaurant"),
+      kotPreference: loadFromLocalStorage<KOTPreference>('kotPreference', { type: 'separate' } as KOTPreference),
+      attendance: loadFromLocalStorage('attendance', []),
+      advances: loadFromLocalStorage('advances', []),
     }
-    
+
     setInitialData(data);
     setIsLoading(false);
   }, []);
 
   if (isLoading || !initialData) {
     return (
-        <div className="flex items-center justify-center h-screen bg-background">
-            <div className="w-full max-w-md p-8 space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <div className="flex gap-4">
-                    <Skeleton className="h-64 w-1/3" />
-                    <div className="flex-grow space-y-4">
-                        <Skeleton className="h-16 w-full" />
-                        <Skeleton className="h-16 w-full" />
-                        <Skeleton className="h-16 w-full" />
-                    </div>
-                </div>
-                 <Skeleton className="h-24 w-full" />
+      <div className="flex items-center justify-center h-screen bg-background" suppressHydrationWarning>
+        <div className="w-full max-w-md p-8 space-y-4" suppressHydrationWarning>
+          <Skeleton className="h-12 w-full" />
+          <div className="flex gap-4">
+            <Skeleton className="h-64 w-1/3" />
+            <div className="flex-grow space-y-4">
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
             </div>
+          </div>
+          <Skeleton className="h-24 w-full" />
         </div>
+      </div>
     );
   }
 
   return (
-    <AppEntry 
+    <AppEntry
       initialMenu={initialData.menu}
       initialInventory={initialData.inventory}
       initialEmployees={initialData.employees}

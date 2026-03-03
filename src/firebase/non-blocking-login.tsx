@@ -1,4 +1,5 @@
 'use client';
+// aria-label placeholder
 import {
   Auth, // Import Auth type for type hinting
   signInAnonymously,

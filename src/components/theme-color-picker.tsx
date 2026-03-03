@@ -18,7 +18,7 @@ const themeColors = [
     { name: "blue", label: "Blue", color: "hsl(221, 83%, 53%)" },
     { name: "green", label: "Green", color: "hsl(142, 71%, 45%)" },
     { name: "rose", label: "Rose", color: "hsl(346, 84%, 61%)" },
-    { name: "violet", label: "Violet", color: "hsl(262, 83%, 58%)" },
+    { name: "cyan", label: "Cyan", color: "hsl(188, 86%, 53%)" },
 ] as const
 
 export function ThemeColorPicker() {

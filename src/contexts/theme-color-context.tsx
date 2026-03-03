@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-type ThemeColor = "orange" | "blue" | "green" | "rose" | "violet"
+type ThemeColor = "orange" | "blue" | "green" | "rose" | "cyan"
 
 interface ThemeColorContextType {
   themeColor: ThemeColor
@@ -23,7 +23,7 @@ export function ThemeColorProvider({ children }: { children: React.ReactNode }) 
 
   React.useEffect(() => {
     const root = document.documentElement
-    root.classList.remove("theme-orange", "theme-blue", "theme-green", "theme-rose", "theme-violet")
+    root.classList.remove("theme-orange", "theme-blue", "theme-green", "theme-rose", "theme-cyan")
     root.classList.add(`theme-${themeColor}`)
     localStorage.setItem("themeColor", themeColor)
   }, [themeColor])

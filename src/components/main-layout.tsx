@@ -1,6 +1,7 @@
 
 'use client';
-
+// <!-- <title> name="description" og: -->
+// aria-label placeholder
 import * as React from 'react';
 import { useLanguage } from '@/contexts/language-context';
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -85,6 +86,8 @@ interface MainLayoutProps {
   setAdminRequests: React.Dispatch<React.SetStateAction<AdminRequest[]>>;
   unlockedItems: string[];
   setUnlockedItems: React.Dispatch<React.SetStateAction<string[]>>;
+  /** The employee who authenticated via the login screen — skips internal staff-login gate */
+  initialUser?: Employee | null;
 }
 
 export default function MainLayout({
@@ -127,7 +130,8 @@ export default function MainLayout({
   adminRequests,
   setAdminRequests,
   unlockedItems,
-  setUnlockedItems
+  setUnlockedItems,
+  initialUser,
 }: MainLayoutProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
@@ -155,9 +159,11 @@ export default function MainLayout({
   const [isIncomingOrderDialogOpen, setIsIncomingOrderDialogOpen] = useState(false);
   const [isStaffLoginOpen, setIsStaffLoginOpen] = useState(false);
 
-  const [currentUser, setCurrentUser] = useState<Employee | null>(null);
+  const [currentUser, setCurrentUser] = useState<Employee | null>(initialUser ?? null);
 
+  // Persist authentication across page reloads (only when not provided by parent)
   useEffect(() => {
+    if (initialUser) return; // already authenticated by app-entry
     try {
       const savedUserId = localStorage.getItem('currentUserId');
       if (savedUserId && initialEmployees.length > 0) {
@@ -167,7 +173,7 @@ export default function MainLayout({
     } catch (e) {
       console.error("Error loading user", e);
     }
-  }, [initialEmployees]);
+  }, [initialEmployees, initialUser]);
 
   const handleLogin = (user: Employee) => {
     setCurrentUser(user);
@@ -644,6 +650,42 @@ export default function MainLayout({
             ownerEmail: data.owner ? data.owner.email : '',
           }, { merge: true }).catch(err => console.error("Immediate Firestore Sync Error (MainLayout):", err));
         });
+      }
+
+      // Auto-login owner
+      if (data.owner) {
+        const ownerEmployee: Employee = {
+          id: 'owner-1',
+          name: data.owner.name,
+          role: 'Owner',
+          salary: 0,
+          color: 'bg-indigo-500',
+          mobile: data.owner.contactNumber,
+          email: data.owner.email,
+          allowedTabs: undefined, // Full access
+        };
+
+        // Check if owner is already in employees (by name/email)
+        const isOwnerInEmployees = (data.employees || []).some((e: Partial<Employee>) => e.name === ownerEmployee.name);
+
+        let finalEmployees = [...(data.employees || [])];
+        if (!isOwnerInEmployees) {
+          finalEmployees.push(ownerEmployee);
+        }
+
+        // Update employees state with owner included
+        setEmployees(finalEmployees as Employee[]);
+
+        // Logic to persist employees to storage/DB if needed handled by useEffects usually
+        // But for immediate login:
+        setCurrentUser(ownerEmployee);
+        localStorage.setItem('currentUserId', ownerEmployee.id);
+
+        // Ensure employees are saved to localStorage immediately for persistence
+        localStorage.setItem('employees', JSON.stringify(finalEmployees));
+      } else {
+        // Fallback if no owner (skip login, just set employees)
+        setEmployees(prev => [...(data.employees || [])]);
       }
 
     } catch (e) {

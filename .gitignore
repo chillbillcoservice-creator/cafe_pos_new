@@ -38,3 +38,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# debug / temp files (never commit these)
+debug_*.txt
+debug_*.log
+test_metrics*.txt
+test_results*.txt
+auth_*.txt
+*error*.log
+*_output*.txt
+menu-failure.html
+dev_server.log

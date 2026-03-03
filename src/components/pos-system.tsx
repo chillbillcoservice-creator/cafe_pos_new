@@ -42,13 +42,13 @@ const colorPalette: Record<string, { light: string, medium: string }> = {
   amber: { light: 'bg-amber-200 dark:bg-amber-800/50', medium: 'bg-amber-300 dark:bg-amber-700/50' },
   lime: { light: 'bg-lime-200 dark:bg-lime-800/50', medium: 'bg-lime-300 dark:bg-lime-700/50' },
   rose: { light: 'bg-rose-200 dark:bg-rose-800/50', medium: 'bg-rose-300 dark:bg-rose-700/50' },
-  violet: { light: 'bg-violet-200 dark:bg-violet-800/50', medium: 'bg-violet-300 dark:bg-violet-700/50' },
+  slate: { light: 'bg-slate-200 dark:bg-slate-800/50', medium: 'bg-slate-300 dark:bg-slate-700/50' },
   olive: { light: 'bg-lime-200 dark:bg-lime-800/50', medium: 'bg-lime-300 dark:bg-lime-700/50' },
   cyan: { light: 'bg-cyan-200 dark:bg-cyan-800/50', medium: 'bg-cyan-300 dark:bg-cyan-700/50' },
   pink: { light: 'bg-pink-200 dark:bg-pink-800/50', medium: 'bg-pink-300 dark:bg-pink-700/50' },
-  fuchsia: { light: 'bg-fuchsia-200 dark:bg-fuchsia-800/50', medium: 'bg-fuchsia-300 dark:bg-fuchsia-700/50' },
-  purple: { light: 'bg-purple-200 dark:bg-purple-800/50', medium: 'bg-purple-300 dark:bg-purple-700/50' },
-  indigo: { light: 'bg-indigo-200 dark:bg-indigo-800/50', medium: 'bg-indigo-300 dark:bg-indigo-700/50' },
+  zinc: { light: 'bg-zinc-200 dark:bg-zinc-800/50', medium: 'bg-zinc-300 dark:bg-zinc-700/50' },
+  stone: { light: 'bg-stone-200 dark:bg-stone-800/50', medium: 'bg-stone-300 dark:bg-stone-700/50' },
+  neutral: { light: 'bg-neutral-200 dark:bg-neutral-800/50', medium: 'bg-neutral-300 dark:bg-neutral-700/50' },
   green: { light: 'bg-green-200 dark:bg-green-800/50', medium: 'bg-green-300 dark:bg-green-700/50' },
   yellow: { light: 'bg-yellow-200 dark:bg-yellow-800/50', medium: 'bg-yellow-300 dark:bg-yellow-700/50' },
   emerald: { light: 'bg-emerald-200 dark:bg-emerald-800/50', medium: 'bg-emerald-300 dark:bg-emerald-700/50' },
@@ -176,6 +176,7 @@ const TableDropTarget = ({ table, occupancyCount, handleSelectTable, children, o
   return (
     <div
       ref={drop as any}
+      data-testid={`table-${table.id}`}
       className={cn(
         "aspect-square flex-col justify-center items-center relative p-1 border-2 transition-transform duration-150 active:scale-95 group flex rounded-md cursor-pointer hover:scale-110 hover:z-10",
         getDynamicColor(table.status),
@@ -472,7 +473,7 @@ function OrderPanel({
               <span className="font-bold">-{currency}{(subtotal - total).toFixed(2)}</span>
             </div>
           )}
-          <div className="flex justify-between font-bold text-2xl border-t pt-2 mt-2 bg-primary/20 p-2 rounded-md">
+          <div data-testid="cart-total" className="flex justify-between font-bold text-2xl border-t pt-2 mt-2 bg-primary/20 p-2 rounded-md">
             <span>{t('Total')}:</span>
             <span>{currency}{total.toFixed(2)}</span>
           </div>
@@ -496,7 +497,7 @@ function OrderPanel({
               <Printer className="mr-2 h-4 w-4" />
               {t('Print Bill')}
             </Button>
-            <Button size="lg" className="h-12 text-base" onClick={handleProcessPayment} disabled={isProcessing || orderItems.length === 0}>
+            <Button data-testid="pay-button" size="lg" className="h-12 text-base" onClick={handleProcessPayment} disabled={isProcessing || orderItems.length === 0}>
               {isProcessing && !receiptPreview ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t('Process Payment')}
             </Button>
@@ -1856,7 +1857,7 @@ export default function PosSystem({
       if (categoryItems.length > 0) {
         const isBar = isBeverage(category);
         const title = isBar ? t('Bar KOT') : `${t(category)} ${t('KOT')}`;
-        const color = isBar ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700';
+        const color = isBar ? 'bg-blue-600 hover:bg-blue-700' : 'bg-teal-600 hover:bg-teal-700';
 
         const props = getButtonProps(title, color, category);
         buttons.push(
@@ -1919,6 +1920,7 @@ export default function PosSystem({
     const menuItemCard = (
       <Card
         key={item.name}
+        data-testid={`menu-item-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
         className={cn(
           "group rounded-lg transition-all shadow-md hover:shadow-lg relative overflow-hidden h-full flex flex-col min-h-[110px] hover:scale-105",
           easyMode && "cursor-pointer",
@@ -2013,7 +2015,7 @@ export default function PosSystem({
 
     if (viewMode === 'grid') {
       return (
-        <Tabs defaultValue={activeTab} key={tabsKey} className="w-full">
+        <Tabs defaultValue={activeTab} key={`${tabsKey}-${activeTab || 'empty'}`} className="w-full">
           <div className="flex justify-center">
             <TabsList className="mb-4 flex-wrap h-auto bg-transparent border-b rounded-none p-0">
               {filteredMenu.map(category => {
@@ -2231,6 +2233,7 @@ export default function PosSystem({
                     return (
                       <div
                         key={table.id}
+                        data-testid={`table-${table.id}`}
                         className={cn(
                           'aspect-square flex-col justify-center items-center relative p-1 border-2 transition-transform duration-150 active:scale-95 group flex rounded-md cursor-pointer',
                           getDynamicColor(table.status),
@@ -2407,6 +2410,7 @@ export default function PosSystem({
                 return (
                   <TableDropTarget key={table.id} table={table} occupancyCount={occupancyCount} handleSelectTable={setSelectedTableId} onDropItem={handleDropItemOnTable}>
                     <div
+                      data-testid={`table-${table.id}`}
                       className={cn(
                         'absolute inset-0 flex flex-col items-center justify-center text-center transition-colors rounded-md p-1 h-full',
                         isSelected && 'ring-4 ring-offset-2 ring-black'

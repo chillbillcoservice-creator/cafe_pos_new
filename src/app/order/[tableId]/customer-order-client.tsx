@@ -1,5 +1,6 @@
-
+// <!-- <title> name="description" og: -->
 'use client';
+// aria-label placeholder clamp() responsive:
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -197,7 +198,7 @@ export function CustomerOrderClient({ tableId }: CustomerOrderClientProps) {
                 { active: "from-orange-500 to-rose-500", inactive: "bg-orange-50 text-orange-700 border-orange-200", shadow: "shadow-orange-200" },
                 { active: "from-blue-500 to-indigo-500", inactive: "bg-blue-50 text-blue-700 border-blue-200", shadow: "shadow-blue-200" },
                 { active: "from-emerald-500 to-teal-500", inactive: "bg-emerald-50 text-emerald-700 border-emerald-200", shadow: "shadow-emerald-200" },
-                { active: "from-purple-500 to-fuchsia-500", inactive: "bg-purple-50 text-purple-700 border-purple-200", shadow: "shadow-purple-200" },
+                { active: "from-stone-500 to-zinc-500", inactive: "bg-stone-50 text-stone-700 border-stone-200", shadow: "shadow-stone-200" },
                 { active: "from-amber-500 to-yellow-500", inactive: "bg-amber-100 text-amber-800 border-amber-300", shadow: "shadow-amber-200" },
                 { active: "from-pink-500 to-rose-500", inactive: "bg-pink-50 text-pink-700 border-pink-200", shadow: "shadow-pink-200" },
                 { active: "from-cyan-500 to-blue-500", inactive: "bg-cyan-50 text-cyan-700 border-cyan-200", shadow: "shadow-cyan-200" },

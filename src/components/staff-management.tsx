@@ -34,7 +34,7 @@ const attendanceStatusConfig: Record<AttendanceStatus, { icon: React.ElementType
   'Half-day': { icon: UserMinus, color: 'yellow', label: 'Half-day', className: 'bg-yellow-500 hover:bg-yellow-600 text-black' }
 };
 
-const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
+const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-cyan-500', 'bg-pink-500', 'bg-emerald-500', 'bg-teal-500'];
 const defaultRoles = ["Manager", "Head Chef", "Chef", "Waiter", "Cleaner", "Helper", "Bar Tender", "Delivery Boy"];
 
 const AVAILABLE_TABS = [

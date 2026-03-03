@@ -1,0 +1,110 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e5]:
+        - img [ref=e7]
+        - generic [ref=e9]: CHILLBILL
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]: Platform operational · v2.0
+          - heading "Run your restaurant." [level=1] [ref=e14]:
+            - text: Run your
+            - text: restaurant.
+          - paragraph [ref=e15]: Signing in to My Restaurant.
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]: 🧾
+            - generic [ref=e19]:
+              - paragraph [ref=e20]: Orders & KOT
+              - paragraph [ref=e21]: Real-time kitchen tickets
+          - generic [ref=e22]:
+            - generic [ref=e23]: 👥
+            - generic [ref=e24]:
+              - paragraph [ref=e25]: Staff & Roles
+              - paragraph [ref=e26]: Role-based access control
+          - generic [ref=e27]:
+            - generic [ref=e28]: 📦
+            - generic [ref=e29]:
+              - paragraph [ref=e30]: Inventory
+              - paragraph [ref=e31]: Low-stock alerts & tracking
+          - generic [ref=e32]:
+            - generic [ref=e33]: 📊
+            - generic [ref=e34]:
+              - paragraph [ref=e35]: Reports
+              - paragraph [ref=e36]: Sales, expense & profit
+          - generic [ref=e37]:
+            - generic [ref=e38]: 💳
+            - generic [ref=e39]:
+              - paragraph [ref=e40]: Billing
+              - paragraph [ref=e41]: Split bills, discounts, UPI
+          - generic [ref=e42]:
+            - generic [ref=e43]: 📅
+            - generic [ref=e44]:
+              - paragraph [ref=e45]: Attendance
+              - paragraph [ref=e46]: Clock-in, salary & advances
+        - generic [ref=e47]:
+          - generic [ref=e48]: “
+          - paragraph [ref=e49]: ChillBill cut our order errors by 80% and saves us 3 hours of admin work every single day.
+          - generic [ref=e50]:
+            - generic [ref=e51]: R
+            - generic [ref=e52]:
+              - paragraph [ref=e53]: Rajesh Kumar
+              - paragraph [ref=e54]: Owner · Grand Spice, Mumbai
+            - generic [ref=e55]:
+              - generic [ref=e56]: ★
+              - generic [ref=e57]: ★
+              - generic [ref=e58]: ★
+              - generic [ref=e59]: ★
+              - generic [ref=e60]: ★
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - generic [ref=e63]: Firebase Secured
+          - generic [ref=e65]: Multi-tenant
+          - generic [ref=e67]: PWA Ready
+          - generic [ref=e69]: Offline Support
+        - paragraph [ref=e71]: © 2026 ChillBill · Restaurant Management Platform
+    - generic [ref=e73]:
+      - generic [ref=e74]:
+        - heading "Welcome back" [level=2] [ref=e75]
+        - paragraph [ref=e76]: Sign in to continue to your dashboard
+      - generic [ref=e77]:
+        - button "Owner Full access" [ref=e78] [cursor=pointer]:
+          - img [ref=e81]
+          - generic [ref=e85]:
+            - paragraph [ref=e86]: Owner
+            - paragraph [ref=e87]: Full access
+        - button "Staff Your workspace" [ref=e88] [cursor=pointer]:
+          - img [ref=e90]
+          - generic [ref=e93]:
+            - paragraph [ref=e94]: Staff
+            - paragraph [ref=e95]: Your workspace
+      - generic [ref=e96]:
+        - generic [ref=e98]:
+          - button "Continue with Google" [ref=e99] [cursor=pointer]:
+            - img [ref=e100]
+            - generic [ref=e105]: Continue with Google
+          - generic [ref=e108]: or
+          - generic [ref=e110]:
+            - img
+            - textbox "Email address" [ref=e111]
+          - generic [ref=e112]:
+            - img
+            - textbox "Password" [ref=e113]
+            - button [ref=e114] [cursor=pointer]:
+              - img [ref=e115]
+        - button "Sign In" [ref=e118] [cursor=pointer]:
+          - generic [ref=e120]: Sign In
+          - img [ref=e121]
+      - paragraph [ref=e123]:
+        - text: Don't have an account?
+        - link "Contact us" [ref=e124] [cursor=pointer]:
+          - /url: mailto:support@chillbill.co
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=e125]
+  - button "Open Next.js Dev Tools" [ref=e131] [cursor=pointer]:
+    - img [ref=e132]
+```

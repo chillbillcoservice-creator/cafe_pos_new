@@ -1,0 +1,1136 @@
+[
+  {
+    "id": "TC001",
+    "title": "Staff Login screen shows heading and employee grid when staff exist",
+    "description": "Verifies that the staff selection screen is visible and includes the expected heading and a grid of employee cards (when setup wizard is not blocking).",
+    "category": "Staff Login",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Who is working?\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Employee cards grid\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"An employee card\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC002",
+    "title": "Log in by selecting an employee card and reach POS table grid dashboard",
+    "description": "Verifies that selecting a staff card transitions into the POS table grid dashboard.",
+    "category": "Staff Login",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Who is working?\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on an employee card"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"POS table grid dashboard\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Who is working?\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC003",
+    "title": "No staff available: show prompt and block entry to POS",
+    "description": "Verifies that when no employee cards are available, the UI shows a prompt to add staff/contact admin and does not allow proceeding to the POS dashboard.",
+    "category": "Staff Login",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Who is working?\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Employee cards grid\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"An employee card\" is not visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"add staff\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"POS table grid dashboard\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC004",
+    "title": "Staff Login screen remains stable on reload (no unexpected navigation)",
+    "description": "Verifies that reloading the root page keeps the user on the staff selection screen when not logged in (and not blocked by wizard).",
+    "category": "Staff Login",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Who is working?\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Press Enter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Who is working?\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC005",
+    "title": "Employee grid supports selection after scrolling (large staff list)",
+    "description": "Verifies that an employee card can still be selected after scrolling when the staff list is long and the grid extends beyond the initial view.",
+    "category": "Staff Login",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Who is working?\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to \"Employee cards grid\""
+      },
+      {
+        "type": "action",
+        "description": "Scroll to \"An employee card\""
+      },
+      {
+        "type": "action",
+        "description": "Click on an employee card"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"POS table grid dashboard\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC006",
+    "title": "Prevent proceeding to POS when staff cards are absent (no clickable login options)",
+    "description": "Verifies that in the no-staff state there is no visible interactive employee option that could be used to enter the POS.",
+    "category": "Staff Login",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Who is working?\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"An employee card\" is not visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"contact\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"POS table grid dashboard\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC007",
+    "title": "Process a cash payment successfully and return table to Available",
+    "description": "Verifies a staff member can add an item to a table order, pay with sufficient cash, and see payment success with the table becoming Available.",
+    "category": "POS Ordering & Payment",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first visible table card whose test id starts with \"table-1\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"cart-total\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Add\" button on a visible menu item card"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Add to Order\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add to Order\" in the confirmation dialog"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"cart-total\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Process Payment\" (pay-button)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"payment-dialog\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Cash\" as the payment method"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"9999\" into the cash received input field (cash-received)"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Confirm Cash Payment\" (confirm-cash-payment)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"payment-dialog\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC008",
+    "title": "Cash payment shows validation when cash received is insufficient",
+    "description": "Verifies the payment dialog blocks confirmation and shows an insufficient cash validation message when cash received is less than the cart total.",
+    "category": "POS Ordering & Payment",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first visible table card whose test id starts with \"table-1\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Add\" button on a visible menu item card"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Add to Order\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add to Order\" in the confirmation dialog"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Process Payment\" (pay-button)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"payment-dialog\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Select \"Cash\" as the payment method"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"0\" into the cash received input field (cash-received)"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Confirm Cash Payment\" (confirm-cash-payment)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"insufficient\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC009",
+    "title": "Cart total updates only after confirming Add to Order",
+    "description": "Verifies that clicking a menu item’s Add button and confirming in the dialog increases the visible cart total.",
+    "category": "POS Ordering & Payment",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first visible table card whose test id starts with \"table-1\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"cart-total\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Add\" button on a visible menu item card"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Add to Order\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add to Order\" in the confirmation dialog"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"cart-total\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"$\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC010",
+    "title": "Canceling the Add to Order dialog does not change the cart",
+    "description": "Verifies dismissing the Add to Order confirmation dialog does not add the item and does not change the visible cart total.",
+    "category": "POS Ordering & Payment",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first visible table card whose test id starts with \"table-1\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"cart-total\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Add\" button on a visible menu item card"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Add to Order\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Press \"Escape\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Add to Order\" is not visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"cart-total\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC011",
+    "title": "Payment dialog can be opened and closed without confirming payment",
+    "description": "Verifies the payment dialog opens from the cart and can be closed without completing a transaction.",
+    "category": "POS Ordering & Payment",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click on the first visible table card whose test id starts with \"table-1\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Add\" button on a visible menu item card"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add to Order\" in the confirmation dialog"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Process Payment\" (pay-button)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"payment-dialog\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Press \"Escape\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"payment-dialog\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC012",
+    "title": "Create a new menu item with name, positive price, and description",
+    "description": "Verifies authorized staff can add a valid menu item via Manage Menu and see it appear in the POS menu list.",
+    "category": "Menu Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Manage Menu\" button or icon"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Manage Menu\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"E2E Latte\" into the item name input"
+      },
+      {
+        "type": "action",
+        "description": "Type \"4.50\" into the item price input"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Test description\" into the item description input"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Save\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"E2E Latte\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC013",
+    "title": "Create a new menu item with name and positive price only (no description)",
+    "description": "Verifies description is optional when saving a new menu item.",
+    "category": "Menu Management",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Manage Menu\" button or icon"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Manage Menu\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"E2E Espresso\" into the item name input"
+      },
+      {
+        "type": "action",
+        "description": "Type \"2.75\" into the item price input"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Save\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"E2E Espresso\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC014",
+    "title": "Validation: price missing shows an error and item is not added",
+    "description": "Verifies the Manage Menu form blocks saving when price is empty and shows a visible validation error.",
+    "category": "Menu Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Manage Menu\" button or icon"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Manage Menu\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"E2E No Price\" into the item name input"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Save\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"price\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"E2E No Price\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC015",
+    "title": "Validation: negative price shows an error and item is not added",
+    "description": "Verifies the Manage Menu form blocks saving when price is negative and shows a visible validation error.",
+    "category": "Menu Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Manage Menu\" button or icon"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Manage Menu\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"E2E Negative Price\" into the item name input"
+      },
+      {
+        "type": "action",
+        "description": "Type \"-1\" into the item price input"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Save\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"price\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"E2E Negative Price\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC016",
+    "title": "Validation: non-numeric price shows an error",
+    "description": "Verifies the Manage Menu form rejects a non-numeric price value with a visible error.",
+    "category": "Menu Management",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Manage Menu\" button or icon"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Manage Menu\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"E2E Bad Price\" into the item name input"
+      },
+      {
+        "type": "action",
+        "description": "Type \"abc\" into the item price input"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Save\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"price\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC017",
+    "title": "Validation: missing item name shows an error and does not save",
+    "description": "Verifies the Manage Menu form blocks saving when the item name is empty and shows a visible validation error.",
+    "category": "Menu Management",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify URL contains \"/\""
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Manage Menu\" button or icon"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Manage Menu\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"3.25\" into the item price input"
+      },
+      {
+        "type": "action",
+        "description": "Click the \"Save\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"name\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC018",
+    "title": "Place an order successfully from the self-service page",
+    "description": "Verifies a customer can add an item to the cart and submit an order, then see a confirmation message.",
+    "category": "Customer Self-Service Order",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /order"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Menu\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to a visible menu item card"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add\" on a visible menu item"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Cart\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Submit order\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Order confirmation\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC019",
+    "title": "Prevent submitting an empty order",
+    "description": "Verifies submitting an order with an empty cart is blocked with a visible validation error.",
+    "category": "Customer Self-Service Order",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /order"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Cart\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Submit order\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Please add items\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Order confirmation\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC020",
+    "title": "Cart updates only when using the Add button on a menu item",
+    "description": "Verifies the cart does not change when only browsing, and updates after explicitly clicking the Add button on a menu card.",
+    "category": "Customer Self-Service Order",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /order"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Cart\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to a visible menu item card"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Your cart is empty\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add\" on the same visible menu item"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Your cart is empty\" is not visible"
+      }
+    ]
+  },
+  {
+    "id": "TC021",
+    "title": "Add multiple different items and verify cart reflects multiple lines before submitting",
+    "description": "Verifies a customer can add more than one menu item and sees multiple items reflected in the cart area before submission.",
+    "category": "Customer Self-Service Order",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /order"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Menu\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add\" on a first visible menu item"
+      },
+      {
+        "type": "action",
+        "description": "Scroll to a different visible menu item card"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add\" on the different visible menu item"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Cart\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Cart item list\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC022",
+    "title": "Submit order after adding multiple items shows confirmation and clears cart state",
+    "description": "Verifies submitting an order after adding items results in a confirmation message and the cart returns to an empty state.",
+    "category": "Customer Self-Service Order",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /order"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add\" on a visible menu item"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add\" on another visible menu item"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Submit order\""
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Order confirmation\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Your cart is empty\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC023",
+    "title": "Admin can access Bill History and view completed bills list",
+    "description": "Verifies an admin user can reach the Bill History tab from the main POS layout and see completed bills content.",
+    "category": "Admin Dashboard & Table Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click on the admin user in the staff selection grid"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Bill History\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Bill History\" tab in the main layout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Completed Bills\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an element \"bill history list\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC024",
+    "title": "Admin can add an expense and see it in the Expenses list",
+    "description": "Verifies an admin user can add a new expense from the Expenses tab and the newly saved expense appears in the list.",
+    "category": "Admin Dashboard & Table Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click on the admin user in the staff selection grid"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Expenses\" tab in the main layout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Expenses\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add Expense\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Add Expense\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Coffee beans\" into the \"Description\" field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Save\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Coffee beans\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC025",
+    "title": "Admin sees validation when saving an expense with missing required fields",
+    "description": "Verifies the Add Expense form prevents saving when required fields are missing and shows a visible validation message.",
+    "category": "Admin Dashboard & Table Management",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click on the admin user in the staff selection grid"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Expenses\" tab in the main layout"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add Expense\" button"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Save\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"required\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Expenses\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC026",
+    "title": "Admin can open Table Management and add a new table",
+    "description": "Verifies an admin user can add a new table from Table Management and the new table card appears on the POS grid.",
+    "category": "Admin Dashboard & Table Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click on the admin user in the staff selection grid"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Table Management\" tab in the main layout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Table Management\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add Table\" button"
+      },
+      {
+        "type": "action",
+        "description": "Type \"Table A\" into the \"Table name\" field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Save\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Table A\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC027",
+    "title": "Admin cannot add a table with a blank name",
+    "description": "Verifies the Add Table flow enforces a non-empty table name and shows a visible error or prevents saving.",
+    "category": "Admin Dashboard & Table Management",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click on the admin user in the staff selection grid"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Table Management\" tab in the main layout"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add Table\" button"
+      },
+      {
+        "type": "action",
+        "description": "Type \"   \" into the \"Table name\" field"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Save\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Table name\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"required\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC028",
+    "title": "Admin can cancel out of Add Expense without creating a new entry",
+    "description": "Verifies an admin user can dismiss the Add Expense UI and no new expense appears in the list.",
+    "category": "Admin Dashboard & Table Management",
+    "priority": "Low",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click on the admin user in the staff selection grid"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Expenses\" tab in the main layout"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Add Expense\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Add Expense\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Cancel\" button"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Add Expense\" is not visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Expenses\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC029",
+    "title": "Non-admin user is blocked from accessing Sales Report / Analytics",
+    "description": "Verifies a non-admin user cannot open the Sales Report / Analytics tab and sees a disabled state or a permission denied message.",
+    "category": "Admin Dashboard & Table Management",
+    "priority": "High",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click on a non-admin user in the staff selection grid"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Sales Report\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Sales Report\" or \"Analytics\" tab in the main layout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Permission denied\" is visible"
+      }
+    ]
+  },
+  {
+    "id": "TC030",
+    "title": "Non-admin user sees Sales Report / Analytics tab disabled (no access)",
+    "description": "Verifies the Sales Report / Analytics entry is visibly disabled or not actionable for a non-admin user.",
+    "category": "Admin Dashboard & Table Management",
+    "priority": "Medium",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Click on a non-admin user in the staff selection grid"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Sales Report\" is visible"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify element \"Sales Report tab (disabled)\" is visible"
+      },
+      {
+        "type": "action",
+        "description": "Click on \"Expenses\" tab in the main layout"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify text \"Expenses\" is visible"
+      }
+    ]
+  }
+]

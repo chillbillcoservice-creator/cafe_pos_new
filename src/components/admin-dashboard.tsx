@@ -33,7 +33,7 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { Checkbox } from './ui/checkbox';
 
 
-const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-teal-500'];
+const colors = ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-cyan-500', 'bg-pink-500', 'bg-emerald-500', 'bg-teal-500'];
 const defaultRoles = ["Manager", "Head Chef", "Chef", "Waiter", "Cleaner", "Helper", "Bar Tender"];
 
 interface AdminDashboardProps {
@@ -438,13 +438,13 @@ export default function AdminDashboard({
             <div className="text-3xl font-bold text-orange-900 dark:text-orange-100">{currency}{averageOrderValue.toFixed(2)}</div>
           </CardContent>
         </Card>
-        <Card className="bg-purple-100 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 cursor-pointer" onClick={showStaffDetails}>
+        <Card className="bg-teal-100 dark:bg-teal-900/30 border-teal-200 dark:border-teal-800 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 cursor-pointer" onClick={showStaffDetails}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-purple-800 dark:text-purple-200">{t('Active Staff')}</CardTitle>
-            <User className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-sm font-medium text-teal-800 dark:text-teal-200">{t('Active Staff')}</CardTitle>
+            <User className="h-4 w-4 text-teal-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-900 dark:text-purple-100">{employees.length}</div>
+            <div className="text-3xl font-bold text-teal-900 dark:text-teal-100">{employees.length}</div>
           </CardContent>
         </Card>
       </div>

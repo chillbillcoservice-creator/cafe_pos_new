@@ -1,0 +1,17 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "executionArgs": {
+    "projectName": "cafe_pos_new",
+    "projectPath": "c:\\Users\\pansh\\OneDrive\\Desktop\\GITHUB POS\\restaurant-app-main\\cafe_pos_new",
+    "testIds": [],
+    "additionalInstruction": "The application uses a staff selection grid on the root path '/'. There is no '/login' page. Ensure the setup wizard is handled if it appears.",
+    "envs": {
+      "API_KEY": "sk-user-A3MQfLfnnOymuOtam0_mCk4JK2X5ZAQo9iHXfhdF_FhNTuT_hgCZ7DPBId9ritsytFGtzHdEzrMCLTt330aaGbpcpPjtrmqK-DkwFffYV81dmNfxtL-FFZayfr1-1Kao_aI"
+    }
+  },
+  "serverPort": 56084,
+  "proxy": "http://b23e9bc6-1667-457f-af20-00f960e847e8:k7HHzPVyAR1s3sQcyItQNv1Ev9h7GFRz@tun.testsprite.com:8080"
+}
